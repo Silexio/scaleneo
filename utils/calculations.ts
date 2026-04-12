@@ -6,11 +6,11 @@ import { SCORE_DEFINITIONS, RED_FLAGS, RedFlagDefinition } from "./definitions";
  * @param val - Score value to parse
  * @returns Parsed numeric score or 0 if invalid
  */
-const parseScore = (val: string | number | undefined | null): number => {
-  if (val === undefined || val === null) return 0;
+const parseScore = (val: string | number | undefined | null): number | null => {
+  if (val === undefined || val === null) return null;
   if (typeof val === "number") return val;
   const parsed = parseInt(val);
-  return isNaN(parsed) ? 0 : parsed;
+  return isNaN(parsed) ? null : parsed;
 };
 
 /**
@@ -65,6 +65,7 @@ export const interpretScore = (
   if (!def) return null;
 
   const numVal = parseScore(value);
+  if (numVal === null) return null;
 
   let result = def.levels[0];
 
@@ -184,9 +185,10 @@ const analyzeSourcesOfSymptoms = (data: PatientData) => {
 const analyzePainType = (data: PatientData) => {
   const csi = parseScore(data.section7.scoreCSI);
 
+  if (csi === null) return "Non évalué (CSI absent)";
   if (csi > 40) return "Nociceptif + Sensibilisation Centrale Dominante";
-  else if (csi > 25) return "Douleur mixte (Nociceptif + Sensibilisation modérée)";
-  else return "Nociceptif mécanique pur";
+  if (csi > 25) return "Douleur mixte (Nociceptif + Sensibilisation modérée)";
+  return "Nociceptif mécanique pur";
 };
 
 /**
@@ -203,7 +205,7 @@ const analyzeImpairments = (data: PatientData) => {
 
   const slrD = parseScore(s6.slrDroit);
   const slrG = parseScore(s6.slrGauche);
-  if ((slrD > 0 && slrD < 70) || (slrG > 0 && slrG < 70)) {
+  if ((slrD !== null && slrD > 0 && slrD < 70) || (slrG !== null && slrG > 0 && slrG < 70)) {
     impairments.push("Neurodynamique limité (SLR+)");
   }
 
@@ -224,9 +226,9 @@ const analyzePainMechanisms = (data: PatientData) => {
   const fabq = parseScore(data.section7.scoreFabqTravail);
 
   const mechanisms: string[] = [];
-  if (csi > 40) mechanisms.push("↑ Sensibilisation centrale");
-  if (pcs > 30) mechanisms.push("↑ Catastrophisation élevée");
-  if (fabq > 40) mechanisms.push("↑ Peur-Évitement (Yellow Flag)");
+  if (csi !== null && csi > 40) mechanisms.push("↑ Sensibilisation centrale");
+  if (pcs !== null && pcs > 30) mechanisms.push("↑ Catastrophisation élevée");
+  if (fabq !== null && fabq > 40) mechanisms.push("↑ Peur-Évitement (Yellow Flag)");
 
   return mechanisms.length > 0 ? mechanisms.join(" + ") : "Mécanismes nociceptifs standards";
 };
@@ -299,7 +301,7 @@ const analyzeManagementPrognosis = (data: PatientData, redFlags: DetectedRedFlag
   if (Object.keys(redFlags).length > 0)
     return "Pronostic réservé - Nécessite surveillance médicale (Red Flags)";
 
-  if (hasText(s12.yellowFlags, "oui"))
+  if (hasText(s12.detailYellowFlags, "oui"))
     return "Pronostic modéré - Risque de chronicité (Yellow Flags)";
 
   return "Pronostic standard - Réévaluation à 4 semaines";

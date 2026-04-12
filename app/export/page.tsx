@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePatient } from "@/components/providers/PatientProvider";
-import { Download, FileSpreadsheet, FileText } from "lucide-react";
+import { AlertCircle, Download, FileSpreadsheet, FileText } from "lucide-react";
 import { useState } from "react";
 import { ExportButton } from "@/components/dashboard/ExportButton";
 import { flattenObject } from "@/utils/objectHelpers";
@@ -20,6 +20,7 @@ import { flattenObject } from "@/utils/objectHelpers";
 export default function ExportPage() {
   const { patientData } = usePatient();
   const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   /**
    * Handles export action for a specific format
@@ -29,10 +30,11 @@ export default function ExportPage() {
    */
   const handleExport = async (format: "csv" | "xlsx" | "json") => {
     if (!patientData) {
-      alert("Aucune donnée à exporter");
+      setExportError("Aucune donnée à exporter.");
       return;
     }
 
+    setExportError(null);
     setIsExporting(true);
 
     try {
@@ -74,7 +76,7 @@ export default function ExportPage() {
 
     } catch (error) {
       console.error("Erreur export:", error);
-      alert(`Erreur lors de l'export ${format.toUpperCase()}`);
+      setExportError(`Erreur lors de l'export ${format.toUpperCase()}.`);
     } finally {
       setIsExporting(false);
     }
@@ -130,6 +132,13 @@ export default function ExportPage() {
             {isExporting && (
               <div className="text-center text-sm text-muted-foreground">
                 Export en cours...
+              </div>
+            )}
+
+            {exportError && (
+              <div className="p-3 bg-destructive/10 text-destructive rounded-md text-sm flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {exportError}
               </div>
             )}
 

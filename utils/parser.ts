@@ -1,3 +1,5 @@
+import type { PatientData } from "@/types/patient";
+
 /**
  * Patient Data Parser
  *
@@ -12,29 +14,8 @@
  * - Automatic type conversion (boolean, number, string)
  */
 
-export interface SectionData {
+interface SectionData {
   [key: string]: string | string[] | boolean | number | null;
-}
-
-export interface PatientData {
-  section1: SectionData;
-  section2: SectionData;
-  section3: SectionData;
-  section4: SectionData;
-  section5: SectionData;
-  section6: SectionData;
-  section7: SectionData;
-  section8: SectionData;
-  section9: SectionData;
-  section10: SectionData;
-  section11: SectionData;
-  section12: SectionData;
-  section13: SectionData;
-  section14: SectionData;
-  section15: SectionData;
-  section16: SectionData;
-  section17: SectionData;
-  section18: SectionData;
 }
 
 /**
@@ -290,6 +271,8 @@ const PARSER_CONFIG: Record<string, Record<string, string>> = {
   }
 };
 
+const CHECKBOX_REGEX = /(☒|☑|☐|\[x\]|\[ \])\s*([^☒☑☐\[\]|:]+)/g;
+
 /**
  * PatientParser Class
  *
@@ -321,12 +304,92 @@ export class PatientParser {
     if (["oui", "yes", "true", "vrai"].includes(lower)) return true;
     if (["non", "no", "false", "faux"].includes(lower)) return false;
 
-    const cleanVal = val.toLowerCase().replace(/\s*(ans|kg|cm|ans|years|kg|kg.|cm|cm.)\s*$/, "").trim();
+    const cleanVal = val.toLowerCase().replace(/\s*(ans|years|kg\.?|cm\.?)\s*$/, "").trim();
 
     const num = Number(cleanVal);
     if (!isNaN(num) && cleanVal !== "" && !cleanVal.includes(" ")) return num;
 
     return val;
+  }
+
+  /**
+   * Extracts checked labels from checkbox syntax, or cleans plain text value.
+   * Returns null if checkboxes found but none checked.
+   */
+  private static extractValue(text: string): string | boolean | number | null {
+    const labels: string[] = [];
+    let m: RegExpExecArray | null;
+    let foundCheckbox = false;
+    const regex = new RegExp(CHECKBOX_REGEX.source, CHECKBOX_REGEX.flags);
+
+    while ((m = regex.exec(text)) !== null) {
+      foundCheckbox = true;
+      const marker = m[1];
+      const label = (m[2] || "").trim().replace(/[.,]$/g, "");
+      const isChecked = marker === "☒" || marker === "☑" || marker.toLowerCase() === "[x]";
+      if (isChecked && label) labels.push(label);
+    }
+
+    if (foundCheckbox) {
+      if (labels.length === 0) return null;
+      return labels.length === 1 ? labels[0] : labels.join(", ");
+    }
+    return this.cleanValue(text);
+  }
+
+  /**
+   * Processes pipe-separated sub-fields on a line and maps them to section properties.
+   * Handles both precise context key lookups and fuzzy field name matching.
+   */
+  private static processAdditionalFields(
+    trimmedLine: string,
+    foundKey: string,
+    targetProp: string,
+    currentSection: SectionData,
+    sectionConfig: Record<string, string>
+  ): void {
+    const additionalFieldsRegex = /(?:^|\|)\s*([^:|]+)(?::\s*([^|]+))?/g;
+    let fieldMatch: RegExpExecArray | null;
+
+    while ((fieldMatch = additionalFieldsRegex.exec(trimmedLine)) !== null) {
+      const fieldName = (fieldMatch[1] || "").trim().toLowerCase();
+      const rawFieldValue = (fieldMatch[2] || "").trim();
+
+      if (!fieldName) continue;
+
+      let normalizedField = fieldName;
+      if (fieldName.includes("nrs") || fieldName.includes("score")) normalizedField = "nrs";
+      else if (fieldName.includes("localisation")) normalizedField = "localisation";
+      else if (fieldName.includes("détail")) normalizedField = "détails";
+      else if (fieldName.includes("met")) normalizedField = "met";
+      else if (fieldName.includes("debout")) normalizedField = "debout";
+      else if (fieldName.includes("marche")) normalizedField = "marche";
+      else if (fieldName.includes("scores")) normalizedField = "scores";
+
+      const contextSearchKey = `${foundKey} ${normalizedField}`.toLowerCase();
+      const preciseContextKey = Object.keys(sectionConfig).find(k =>
+        contextSearchKey === k.toLowerCase() || k.toLowerCase().includes(contextSearchKey)
+      );
+
+      if (preciseContextKey) {
+        const additionalProp = sectionConfig[preciseContextKey];
+        currentSection[additionalProp] = rawFieldValue ? this.extractValue(rawFieldValue) : true;
+      } else {
+        const additionalFieldKey = Object.keys(sectionConfig).find(k => {
+          if (k.includes(" ") && !normalizedField.includes(" ")) return false;
+          return normalizedField.includes(k.toLowerCase()) ||
+            k.toLowerCase().includes(normalizedField) ||
+            fieldName.includes(k.toLowerCase());
+        });
+
+        if (additionalFieldKey) {
+          const additionalProp = sectionConfig[additionalFieldKey];
+          if (additionalProp !== targetProp) {
+            currentSection[additionalProp] = rawFieldValue ? this.extractValue(rawFieldValue) : true;
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -345,12 +408,8 @@ export class PatientParser {
    * @returns Structured PatientData object with 18 sections
    */
   public static parse(fileContent: string): PatientData {
-    const result: Partial<PatientData> = {};
-
-    for (let i = 1; i <= 18; i++) {
-      const key = `section${i}` as keyof PatientData;
-      result[key] = {};
-    }
+    const result: Record<string, SectionData> = {};
+    for (let i = 1; i <= 18; i++) result[`section${i}`] = {};
 
     const lines = fileContent.split(/\r?\n/);
     let currentSectionNum: string | null = null;
@@ -363,15 +422,13 @@ export class PatientParser {
       const sectionMatch = trimmedLine.match(/^={0,}\s*SECTION\s+(\d+)/i);
       if (sectionMatch) {
         currentSectionNum = sectionMatch[1];
-        const configKey = `SECTION ${currentSectionNum}`;
-        currentSectionConfig = PARSER_CONFIG[configKey] || null;
+        currentSectionConfig = PARSER_CONFIG[`SECTION ${currentSectionNum}`] || null;
         continue;
       }
 
       if (!currentSectionConfig || !currentSectionNum) continue;
 
-      const sectionKey = `section${currentSectionNum}` as keyof PatientData;
-      const currentSection = result[sectionKey]!;
+      const currentSection = result[`section${currentSectionNum}`];
 
       if (trimmedLine.includes(":")) {
         const separatorIndex = trimmedLine.indexOf(":");
@@ -379,19 +436,18 @@ export class PatientParser {
         const rawValue = trimmedLine.substring(separatorIndex + 1);
 
         const foundKey = Object.keys(currentSectionConfig)
-          .filter(configKey => rawKey.includes(configKey.toLowerCase()))
+          .filter(k => rawKey.includes(k.toLowerCase()))
           .sort((a, b) => b.length - a.length)[0];
 
         if (foundKey) {
           const targetProp = currentSectionConfig[foundKey];
-
-          const checkboxRegex = /(☒|☑|☐|\[x\]|\[ \])\s*([^☒☑☐\[\]|:]+)/g;
+          const checkboxRegex = new RegExp(CHECKBOX_REGEX.source, CHECKBOX_REGEX.flags);
           const checkedLabels: string[] = [];
           let m: RegExpExecArray | null;
 
           while ((m = checkboxRegex.exec(rawValue)) !== null) {
             const marker = m[1];
-            const label = (m[2] || "").trim().replace(/[\.|,]$/g, "");
+            const label = (m[2] || "").trim().replace(/[.,]$/g, "");
             const isChecked = marker === "☒" || marker === "☑" || marker.toLowerCase() === "[x]";
             if (isChecked && label) checkedLabels.push(label);
           }
@@ -400,85 +456,12 @@ export class PatientParser {
             currentSection[targetProp] = checkedLabels.length === 1 ? checkedLabels[0] : checkedLabels.join(", ");
           } else {
             const hasCheckboxes = /(☒|☑|☐|\[x\]|\[ \])/.test(rawValue);
-            if (hasCheckboxes) {
-              currentSection[targetProp] = null;
-            } else {
-              currentSection[targetProp] = this.cleanValue(rawValue);
-            }
+            currentSection[targetProp] = hasCheckboxes ? null : this.cleanValue(rawValue);
           }
 
-          const additionalFieldsRegex = /(?:^|\|)\s*([^:|]+)(?::\s*([^|]+))?/g;
-          let fieldMatch: RegExpExecArray | null;
-
-          while ((fieldMatch = additionalFieldsRegex.exec(trimmedLine)) !== null) {
-            const fieldName = (fieldMatch[1] || "").trim().toLowerCase();
-            const rawFieldValue = (fieldMatch[2] || "").trim();
-
-            if (fieldName) {
-              const lowerField = fieldName.toLowerCase();
-              let normalizedField = lowerField;
-
-              if (lowerField.includes("nrs") || lowerField.includes("score")) normalizedField = "nrs";
-              if (lowerField.includes("localisation")) normalizedField = "localisation";
-              if (lowerField.includes("détail")) normalizedField = "détails";
-              if (lowerField.includes("met")) normalizedField = "met";
-              if (lowerField.includes("debout")) normalizedField = "debout";
-              if (lowerField.includes("marche")) normalizedField = "marche";
-              if (lowerField.includes("scores")) normalizedField = "scores";
-
-              const contextSearchKey = `${foundKey} ${normalizedField}`.toLowerCase();
-
-              const preciseContextKey = Object.keys(currentSectionConfig).find(k =>
-                contextSearchKey === k.toLowerCase() ||
-                k.toLowerCase().includes(contextSearchKey)
-              );
-
-              const extractValue = (text: string) => {
-                const checkboxRegexNested = /(☒|☑|☐|\[x\]|\[ \])\s*([^☒☑☐\[\]|:]+)/g;
-                const nestedLabels: string[] = [];
-                let mNested: RegExpExecArray | null;
-                let foundCheckbox = false;
-
-                while ((mNested = checkboxRegexNested.exec(text)) !== null) {
-                  foundCheckbox = true;
-                  const marker = mNested[1];
-                  const label = (mNested[2] || "").trim().replace(/[\.|,]$/g, "");
-                  const isChecked = marker === "☒" || marker === "☑" || marker.toLowerCase() === "[x]";
-                  if (isChecked && label) nestedLabels.push(label);
-                }
-
-                if (foundCheckbox) {
-                  if (nestedLabels.length === 0) return null;
-                  return nestedLabels.length === 1 ? nestedLabels[0] : nestedLabels.join(", ");
-                }
-                return this.cleanValue(text);
-              };
-
-              if (preciseContextKey) {
-                const additionalProp = currentSectionConfig[preciseContextKey];
-                const extracted = rawFieldValue ? extractValue(rawFieldValue) : true;
-                currentSection[additionalProp] = extracted;
-              } else {
-                const additionalFieldKey = Object.keys(currentSectionConfig).find(k => {
-                  if (k.includes(" ") && !normalizedField.includes(" ")) return false;
-                  return normalizedField.includes(k.toLowerCase()) ||
-                    k.toLowerCase().includes(normalizedField) ||
-                    fieldName.toLowerCase().includes(k.toLowerCase());
-                });
-
-                if (additionalFieldKey) {
-                  const additionalProp = currentSectionConfig[additionalFieldKey];
-                  if (additionalProp !== targetProp) {
-                    currentSection[additionalProp] = rawFieldValue ? extractValue(rawFieldValue) : true;
-                  }
-                }
-              }
-            }
-          }
+          this.processAdditionalFields(trimmedLine, foundKey, targetProp, currentSection, currentSectionConfig);
         }
-      }
-
-      else if (
+      } else if (
         trimmedLine.startsWith("☐") ||
         trimmedLine.startsWith("☑") ||
         trimmedLine.startsWith("☒") ||
@@ -487,147 +470,39 @@ export class PatientParser {
         trimmedLine.startsWith("- [x]")
       ) {
         const lowerLine = trimmedLine.toLowerCase();
-
         const foundKey = Object.keys(currentSectionConfig).find(k => lowerLine.includes(k));
 
         if (foundKey) {
           const targetProp = currentSectionConfig[foundKey];
-
-          const checkboxRegex = /(☒|☑|☐|\[x\]|\[ \])\s*([^☒☑☐\[\]|:]+)/g;
+          const checkboxRegex = new RegExp(CHECKBOX_REGEX.source, CHECKBOX_REGEX.flags);
           const allMatches = [...trimmedLine.matchAll(checkboxRegex)];
           const isSingleCheckbox = allMatches.length === 1;
           const checkedLabels: string[] = [];
 
           for (const m of allMatches) {
             const marker = m[1];
-            let label = (m[2] || "").trim().replace(/[\.|,]$/g, "");
+            let label = (m[2] || "").trim().replace(/[.,]$/g, "");
             const isChecked = marker === "☒" || marker === "☑" || marker.toLowerCase() === "[x]";
 
             if (isSingleCheckbox) {
-              if (foundKey) {
-                const keyRegex = new RegExp(foundKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-                label = label.replace(keyRegex, "").trim();
-              }
-
+              const keyRegex = new RegExp(foundKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+              label = label.replace(keyRegex, "").trim();
               const prefix = isChecked ? "Oui" : "Non";
-              const finalValue = label ? `${prefix} | ${label}` : prefix;
-              checkedLabels.push(finalValue);
+              checkedLabels.push(label ? `${prefix} | ${label}` : prefix);
             } else {
               if (isChecked && label) checkedLabels.push(label);
             }
           }
 
-          if (checkedLabels.length > 0) {
-            currentSection[targetProp] = checkedLabels.length === 1 ? checkedLabels[0] : checkedLabels.join(", ");
-          } else {
-            currentSection[targetProp] = null;
-          }
+          currentSection[targetProp] = checkedLabels.length > 0
+            ? (checkedLabels.length === 1 ? checkedLabels[0] : checkedLabels.join(", "))
+            : null;
 
-          const additionalFieldsRegex = /(?:^|\|)\s*([^:|]+)(?::\s*([^|]+))?/g;
-          let fieldMatch: RegExpExecArray | null;
-
-          while ((fieldMatch = additionalFieldsRegex.exec(trimmedLine)) !== null) {
-            const fieldName = (fieldMatch[1] || "").trim().toLowerCase();
-            const rawFieldValue = (fieldMatch[2] || "").trim();
-
-            if (fieldName) {
-              const lowerField = fieldName.toLowerCase();
-              let normalizedField = lowerField;
-
-              if (lowerField.includes("nrs") || lowerField.includes("score")) normalizedField = "nrs";
-              if (lowerField.includes("localisation")) normalizedField = "localisation";
-              if (lowerField.includes("détail")) normalizedField = "détails";
-              if (lowerField.includes("met")) normalizedField = "met";
-              if (lowerField.includes("debout")) normalizedField = "debout";
-              if (lowerField.includes("marche")) normalizedField = "marche";
-
-              if (lowerField.includes("scores")) normalizedField = "scores";
-
-              const contextSearchKey = `${foundKey} ${normalizedField}`.toLowerCase();
-
-              const preciseContextKey = Object.keys(currentSectionConfig).find(k =>
-                contextSearchKey === k.toLowerCase() ||
-                k.toLowerCase().includes(contextSearchKey)
-              );
-
-              const extractValue = (text: string) => {
-                const checkboxRegexNested = /(☒|☑|☐|\[x\]|\[ \])\s*([^☒☑☐\[\]|:]+)/g;
-                const nestedLabels: string[] = [];
-                let mNested: RegExpExecArray | null;
-                let foundCheckbox = false;
-
-                while ((mNested = checkboxRegexNested.exec(text)) !== null) {
-                  foundCheckbox = true;
-                  const marker = mNested[1];
-                  const label = (mNested[2] || "").trim().replace(/[\.|,]$/g, "");
-                  const isChecked = marker === "☒" || marker === "☑" || marker.toLowerCase() === "[x]";
-                  if (isChecked && label) nestedLabels.push(label);
-                }
-
-                if (foundCheckbox) {
-                  if (nestedLabels.length === 0) return null;
-                  return nestedLabels.length === 1 ? nestedLabels[0] : nestedLabels.join(", ");
-                }
-                return this.cleanValue(text);
-              };
-
-              if (preciseContextKey) {
-                const additionalProp = currentSectionConfig[preciseContextKey];
-                const extracted = rawFieldValue ? extractValue(rawFieldValue) : true;
-                currentSection[additionalProp] = extracted;
-              } else {
-                const additionalFieldKey = Object.keys(currentSectionConfig).find(k => {
-                  if (k.includes(" ") && !normalizedField.includes(" ")) return false;
-                  return normalizedField.includes(k.toLowerCase()) ||
-                    k.toLowerCase().includes(normalizedField) ||
-                    fieldName.toLowerCase().includes(k.toLowerCase());
-                });
-
-                if (additionalFieldKey) {
-                  const additionalProp = currentSectionConfig[additionalFieldKey];
-                  if (additionalProp !== targetProp) {
-                    currentSection[additionalProp] = rawFieldValue ? extractValue(rawFieldValue) : true;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-
-      else if (
-        trimmedLine.startsWith("☐") ||
-        trimmedLine.startsWith("☑") ||
-        trimmedLine.startsWith("[x]") ||
-        trimmedLine.startsWith("- [ ]") ||
-        trimmedLine.startsWith("- [x]")
-      ) {
-        const lowerLine = trimmedLine.toLowerCase();
-
-        const foundKey = Object.keys(currentSectionConfig).find(k => lowerLine.includes(k));
-
-        if (foundKey) {
-          const targetProp = currentSectionConfig[foundKey];
-
-          const checkboxRegex = /(☒|☑|☐|\[x\]|\[ \])\s*([^☒☑☐\[\]|:]+)/g;
-          const checkedLabels: string[] = [];
-          let m: RegExpExecArray | null;
-          while ((m = checkboxRegex.exec(trimmedLine)) !== null) {
-            const marker = m[1];
-            const label = (m[2] || "").trim().replace(/[\.|,]$/g, "");
-            const isChecked = marker === "☒" || marker === "☑" || marker.toLowerCase() === "[x]";
-            if (isChecked && label) checkedLabels.push(label);
-          }
-
-          if (checkedLabels.length > 0) {
-            currentSection[targetProp] = checkedLabels.length === 1 ? checkedLabels[0] : checkedLabels;
-          } else {
-            currentSection[targetProp] = true;
-          }
+          this.processAdditionalFields(trimmedLine, foundKey, targetProp, currentSection, currentSectionConfig);
         }
       }
     }
 
-    return result as PatientData;
+    return result as unknown as PatientData;
   }
 }

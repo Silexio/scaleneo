@@ -65,7 +65,7 @@ export default function AnalyticsPage() {
       const extractedMetrics = extractMetricsFromTxt(content);
 
       const newAssessment: Assessment = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).substring(2, 11),
         date: newDate,
         label: newLabel || `Suivi ${assessments.length + 1}`,
         fileName: file.name,
@@ -104,10 +104,9 @@ export default function AnalyticsPage() {
     }));
   }, [assessments]);
 
+  const metricEntries = Object.entries(METRICS_CONFIG);
   const baseline = assessments[0];
   const latest = assessments[assessments.length - 1];
-
-  if (typeof window === "undefined") return null;
 
   return (
     <div className="space-y-6 max-w-350 mx-auto p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
@@ -218,7 +217,7 @@ export default function AnalyticsPage() {
             <>
               {/* Metric Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {Object.entries(METRICS_CONFIG).map(([key, config]) => {
+                {metricEntries.map(([key, config]) => {
                   const bVal = baseline?.metrics?.[key];
                   const lVal = latest?.metrics?.[key];
 
@@ -238,7 +237,7 @@ export default function AnalyticsPage() {
 
               {/* Charts Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Object.entries(METRICS_CONFIG).map(([key, config]) => {
+                {metricEntries.map(([key, config]) => {
                   const hasData = assessments.some(
                     (a) => a.metrics[key] !== undefined,
                   );
@@ -282,7 +281,7 @@ export default function AnalyticsPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y">
-                        {Object.entries(METRICS_CONFIG).map(([key, config]) => {
+                        {metricEntries.map(([key, config]) => {
                           const bVal = baseline?.metrics?.[key];
                           const lVal = latest?.metrics?.[key];
 

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, Check, AlertCircle, FileText } from "lucide-react";
+import { Upload, Check, AlertCircle, FileText, Download } from "lucide-react";
 import { PatientParser } from "@/utils/parser";
 import { PatientData } from "@/types/patient";
 import { cn } from "@/lib/utils";
@@ -178,21 +178,7 @@ export function FileUpload({ onDataParsed }: FileUploadProps) {
             className="text-sm font-normal text-primary hover:text-primary/80 flex items-center sm:text-right gap-1.5 transition-colors"
             title="Télécharger le modèle de fiche bilan"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
+            <Download className="w-4 h-4" />
             Télécharger modèle
           </a>
         </CardTitle>
