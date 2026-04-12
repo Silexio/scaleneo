@@ -17,6 +17,8 @@ import {
   FileText,
   Trash2,
   AlertCircle,
+  Check,
+  X,
 } from "lucide-react";
 import { METRICS_CONFIG } from "@/utils/metricsConfig";
 import { extractMetricsFromTxt } from "@/utils/metricsParser";
@@ -43,6 +45,9 @@ export default function AnalyticsPage() {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [newDate, setNewDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [newLabel, setNewLabel] = useState("");
+  const [confirmingClear, setConfirmingClear] = useState(false);
+  const [isParsingFile, setIsParsingFile] = useState(false);
+  const [metricsWarning, setMetricsWarning] = useState<string | null>(null);
 
   /**
    * Handles file upload for assessment TXT files
@@ -52,10 +57,17 @@ export default function AnalyticsPage() {
     const file = e.target.files?.[0];
     if (!file || !newDate) return;
 
+    setIsParsingFile(true);
+    setMetricsWarning(null);
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;
       const extractedMetrics = extractMetricsFromTxt(content);
+
+      if (Object.keys(extractedMetrics).length === 0) {
+        setMetricsWarning("Aucune métrique reconnue dans ce fichier. Vérifiez que le fichier respecte le format SCALENEO.");
+      }
 
       const newAssessment: Assessment = {
         id: Math.random().toString(36).substring(2, 11),
@@ -71,11 +83,12 @@ export default function AnalyticsPage() {
         ),
       );
 
-      const today = new Date().toISOString().split('T')[0];
-      setNewDate(today);
+      setNewDate(new Date().toISOString().split('T')[0]);
       setNewLabel("");
       e.target.value = "";
+      setIsParsingFile(false);
     };
+    reader.onerror = () => setIsParsingFile(false);
     reader.readAsText(file);
   };
 
@@ -84,6 +97,11 @@ export default function AnalyticsPage() {
    */
   const removeAssessment = (id: string) => {
     setAssessments((prev) => prev.filter((a) => a.id !== id));
+  };
+
+  const clearAll = () => {
+    setAssessments([]);
+    setConfirmingClear(false);
   };
 
   /**
@@ -113,19 +131,41 @@ export default function AnalyticsPage() {
             (MCID).
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           {assessments.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAssessments([])}
-              className="text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="w-4 h-4 mr-1" /> Tout effacer
-            </Button>
+            confirmingClear ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-destructive font-medium">Supprimer tous les bilans ?</span>
+                <Button variant="outline" size="sm" onClick={clearAll} className="text-destructive border-destructive hover:bg-destructive/10 h-7 text-xs gap-1">
+                  <Check className="w-3 h-3" /> Confirmer
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setConfirmingClear(false)} className="h-7 text-xs gap-1">
+                  <X className="w-3 h-3" /> Annuler
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirmingClear(true)}
+                className="text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="w-4 h-4 mr-1" /> Tout effacer
+              </Button>
+            )
           )}
         </div>
       </div>
+
+      {metricsWarning && (
+        <div className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg text-sm">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <div className="flex-1">{metricsWarning}</div>
+          <button onClick={() => setMetricsWarning(null)} className="text-yellow-600 hover:text-yellow-800">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Assessment Management Sidebar */}
@@ -161,21 +201,35 @@ export default function AnalyticsPage() {
               <div className="space-y-2">
                 <Label
                   htmlFor="file"
-                  className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 cursor-pointer transition-colors ${newDate
-                    ? "border-primary/30 bg-primary/5 hover:bg-primary/10"
-                    : "border-muted bg-muted/20 cursor-not-allowed opacity-50"
-                    }`}
+                  className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 transition-colors ${
+                    isParsingFile
+                      ? "border-primary/30 bg-primary/5 cursor-wait opacity-70"
+                      : newDate
+                        ? "border-primary/30 bg-primary/5 hover:bg-primary/10 cursor-pointer"
+                        : "border-muted bg-muted/20 cursor-not-allowed opacity-50"
+                  }`}
                 >
-                  <FileText className="w-6 h-6 text-muted-foreground mb-2" />
-                  <span className="text-xs font-medium text-center">
-                    Cliquer pour importer le TXT
-                  </span>
+                  {isParsingFile ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mb-2" />
+                      <span className="text-xs font-medium text-center text-primary">
+                        Analyse en cours...
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-6 h-6 text-muted-foreground mb-2" />
+                      <span className="text-xs font-medium text-center">
+                        Cliquer pour importer le TXT
+                      </span>
+                    </>
+                  )}
                   <Input
                     type="file"
                     id="file"
                     accept=".txt"
                     onChange={handleFileUpload}
-                    disabled={!newDate}
+                    disabled={!newDate || isParsingFile}
                     className="hidden"
                   />
                 </Label>
@@ -213,9 +267,7 @@ export default function AnalyticsPage() {
                 {metricEntries.map(([key, config]) => {
                   const bVal = baseline?.metrics?.[key];
                   const lVal = latest?.metrics?.[key];
-
                   if (bVal === undefined || lVal === undefined) return null;
-
                   return (
                     <MetricCard
                       key={key}
@@ -231,14 +283,10 @@ export default function AnalyticsPage() {
               {/* Charts Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {metricEntries.map(([key, config]) => {
-                  const hasData = assessments.some(
-                    (a) => a.metrics[key] !== undefined,
-                  );
+                  const hasData = assessments.some((a) => a.metrics[key] !== undefined);
                   if (!hasData) return null;
-
                   const bVal = baseline?.metrics?.[key];
                   if (bVal === undefined) return null;
-
                   return (
                     <MetricChart
                       key={key}
@@ -265,9 +313,7 @@ export default function AnalyticsPage() {
                         <tr>
                           <th className="px-6 py-3 font-semibold">Métrique</th>
                           <th className="px-6 py-3 font-semibold">Baseline</th>
-                          <th className="px-6 py-3 font-semibold text-foreground">
-                            Actuel
-                          </th>
+                          <th className="px-6 py-3 font-semibold text-foreground">Actuel</th>
                           <th className="px-6 py-3 font-semibold">Changement</th>
                           <th className="px-6 py-3 font-semibold">Cible MCID</th>
                           <th className="px-6 py-3 font-semibold">Statut</th>
@@ -277,37 +323,21 @@ export default function AnalyticsPage() {
                         {metricEntries.map(([key, config]) => {
                           const bVal = baseline?.metrics?.[key];
                           const lVal = latest?.metrics?.[key];
-
                           if (bVal === undefined || lVal === undefined) return null;
 
                           const diff = lVal - bVal;
-                          const isImprovement =
-                            config.direction === "down" ? diff < 0 : diff > 0;
+                          const isImprovement = config.direction === "down" ? diff < 0 : diff > 0;
                           const isSignificant = Math.abs(diff) >= config.mcid;
 
                           return (
                             <tr key={key} className="hover:bg-muted/20">
-                              <td className="px-6 py-4 font-medium">
-                                {config.label}
+                              <td className="px-6 py-4 font-medium">{config.label}</td>
+                              <td className="px-6 py-4 text-muted-foreground">{bVal.toFixed(1)}</td>
+                              <td className="px-6 py-4 font-bold">{lVal.toFixed(1)}</td>
+                              <td className={`px-6 py-4 font-semibold ${isImprovement ? "text-[hsl(var(--text-success))]" : "text-[hsl(var(--text-error))]"}`}>
+                                {diff > 0 ? "+" : ""}{diff.toFixed(1)}
                               </td>
-                              <td className="px-6 py-4 text-muted-foreground">
-                                {bVal.toFixed(1)}
-                              </td>
-                              <td className="px-6 py-4 font-bold">
-                                {lVal.toFixed(1)}
-                              </td>
-                              <td
-                                className={`px-6 py-4 font-semibold ${isImprovement
-                                  ? "text-[hsl(var(--text-success))]"
-                                  : "text-[hsl(var(--text-error))]"
-                                  }`}
-                              >
-                                {diff > 0 ? "+" : ""}
-                                {diff.toFixed(1)}
-                              </td>
-                              <td className="px-6 py-4 text-muted-foreground italic">
-                                ± {config.mcid}
-                              </td>
+                              <td className="px-6 py-4 text-muted-foreground italic">± {config.mcid}</td>
                               <td className="px-6 py-4">
                                 {isSignificant ? (
                                   <Badge className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-sm px-2 py-0.5 text-[10px]">
@@ -315,8 +345,7 @@ export default function AnalyticsPage() {
                                   </Badge>
                                 ) : (
                                   <span className="text-xs text-muted-foreground flex items-center">
-                                    <AlertCircle className="w-3 h-3 mr-1" /> En
-                                    progression
+                                    <AlertCircle className="w-3 h-3 mr-1" /> En progression
                                   </span>
                                 )}
                               </td>
