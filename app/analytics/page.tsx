@@ -111,6 +111,18 @@ export default function AnalyticsPage() {
                 </p>
               </CardContent>
             </Card>
+          ) : availableMetrics.length === 0 ? (
+            <Card className="border-dashed border-2 bg-muted/10">
+              <CardContent className="flex flex-col items-center justify-center h-48 text-center p-8">
+                <AlertCircle className="w-8 h-8 text-muted-foreground mb-3" />
+                <p className="text-sm font-medium text-foreground">
+                  Aucune métrique commune
+                </p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-64">
+                  Le bilan initial et le bilan actuel ne partagent aucune métrique mesurée. Importez des fichiers au format SCALENEO.
+                </p>
+              </CardContent>
+            </Card>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print:grid-cols-4">

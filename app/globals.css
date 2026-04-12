@@ -89,7 +89,6 @@
 
   --radius: 0.5rem;
 
-  /* Metric colors for analytics charts */
   --metric-pain: hsl(0 79% 63%);
   --metric-disability: hsl(207 90% 54%);
   --metric-sensitization: hsl(37 90% 51%);
@@ -100,16 +99,21 @@
   --metric-avoidance-activity: hsl(16 90% 48%);
   --metric-alliance: hsl(145 63% 42%);
 
-  /* Semantic backgrounds */
   --bg-success: hsl(145 63% 95%);
   --bg-success-subtle: hsl(145 63% 98%);
   --bg-warning: hsl(37 90% 95%);
   --bg-error: hsl(0 79% 95%);
   --bg-info: hsl(207 90% 95%);
 
-  /* Semantic text colors */
-  --text-success: hsl(145 63% 35%);
-  --text-error: hsl(0 79% 45%);
+  --border-success: hsl(145 63% 78%);
+  --border-warning: hsl(37 90% 72%);
+  --border-error: hsl(0 79% 78%);
+  --border-info: hsl(207 90% 78%);
+
+  --text-success: hsl(145 63% 30%);
+  --text-warning: hsl(37 70% 32%);
+  --text-error: hsl(0 79% 40%);
+  --text-info: hsl(207 90% 35%);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -141,6 +145,22 @@
     --border: hsl(217.2 32.6% 17.5%);
     --input: hsl(217.2 32.6% 17.5%);
     --ring: hsl(212.7 26.8% 83.9%);
+
+    --bg-success: hsl(145 40% 12%);
+    --bg-success-subtle: hsl(145 40% 8%);
+    --bg-warning: hsl(37 55% 12%);
+    --bg-error: hsl(0 45% 12%);
+    --bg-info: hsl(207 55% 12%);
+
+    --border-success: hsl(145 40% 28%);
+    --border-warning: hsl(37 55% 28%);
+    --border-error: hsl(0 45% 28%);
+    --border-info: hsl(207 55% 28%);
+
+    --text-success: hsl(145 55% 62%);
+    --text-warning: hsl(37 80% 62%);
+    --text-error: hsl(0 70% 65%);
+    --text-info: hsl(207 80% 68%);
   }
 }
 
@@ -163,29 +183,24 @@ body {
     print-color-adjust: exact;
   }
 
-  /* Supprime l'animation de conteneur */
   .animate-in {
     animation: none !important;
   }
 
-  /* Grille : la colonne charts prend toute la largeur */
   .print\:col-span-4 {
     grid-column: span 4 / span 4;
   }
 
-  /* Empêche les SVG Recharts de déborder de leur carte */
   .recharts-wrapper,
   .recharts-wrapper svg {
     max-width: 100% !important;
     overflow: hidden !important;
   }
 
-  /* Cache la légende (cercles) en impression */
   .recharts-legend-wrapper {
     display: none !important;
   }
 
-  /* Garantit la compatibilité webkit pour break-inside */
   .print\:break-inside-avoid {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
