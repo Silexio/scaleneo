@@ -23,14 +23,7 @@ import { extractMetricsFromTxt } from "@/utils/metricsParser";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { MetricChart } from "@/components/dashboard/MetricChart";
 import { AssessmentTimeline } from "@/components/dashboard/AssessmentTimeline";
-
-interface Assessment {
-  id: string;
-  date: string;
-  label: string;
-  fileName: string;
-  metrics: Record<string, number>;
-}
+import { Assessment } from "@/types/assessment";
 
 /**
  * Analytics Page Component

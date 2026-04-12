@@ -141,7 +141,7 @@ export const RED_FLAGS: Record<string, RedFlagDefinition> = {
   cauda_equina: {
     category: "CRITICAL",
     label: "Syndrome de la Queue de Cheval",
-    searchTerms: ["selle", "anesthésie selle", "rectale", "urinaire", "fécale"],
+    searchTerms: ["anesthésie en selle", "anesthésie selle", "rectale", "fécale"],
     recommendation: "🚨 URGENT: Référence immédiate aux urgences",
     color: "red",
   },

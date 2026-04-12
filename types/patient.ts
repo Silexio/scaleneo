@@ -186,7 +186,6 @@ export interface Section12 {
   attentesRealistes?: boolean;
   detailAttentes?: string;
   anticipationGuerison?: string;
-  yellowFlags?: string;
   detailYellowFlags?: string;
   soutienSocial?: string;
   detailSoutien?: string;

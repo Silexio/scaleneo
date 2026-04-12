@@ -1,12 +1,8 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { PatientData } from "@/types/patient";
 
-/**
- * Patient context type definition
- * Provides patient data state and raw content state to the application
- */
 interface PatientContextType {
   patientData: PatientData | null;
   setPatientData: (data: PatientData | null) => void;
@@ -16,25 +12,52 @@ interface PatientContextType {
 
 const PatientContext = createContext<PatientContextType | undefined>(undefined);
 
+const STORAGE_KEY = "scaleneo_patient_data";
+const RAW_CONTENT_KEY = "scaleneo_raw_content";
+
 /**
  * Patient Provider Component
  *
- * Manages global patient data state across the application
- * Provides both structured patient data and raw file content
+ * Manages global patient data state with localStorage persistence.
+ * Data survives page reloads. Storage errors are silently ignored.
  */
 export function PatientProvider({ children }: { children: ReactNode }) {
-  const [patientData, setPatientData] = useState<PatientData | null>(null);
-  const [rawContent, setRawContent] = useState<string>("");
+  const [patientData, setPatientDataState] = useState<PatientData | null>(null);
+  const [rawContent, setRawContentState] = useState<string>("");
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) setPatientDataState(JSON.parse(stored) as PatientData);
+      const raw = localStorage.getItem(RAW_CONTENT_KEY);
+      if (raw) setRawContentState(raw);
+    } catch {
+      // localStorage indisponible ou données corrompues — état vide
+    }
+  }, []);
+
+  const setPatientData = (data: PatientData | null) => {
+    setPatientDataState(data);
+    try {
+      if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      else localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // quota dépassé — on continue sans persister
+    }
+  };
+
+  const setRawContent = (content: string) => {
+    setRawContentState(content);
+    try {
+      if (content) localStorage.setItem(RAW_CONTENT_KEY, content);
+      else localStorage.removeItem(RAW_CONTENT_KEY);
+    } catch {
+      // quota dépassé — on continue sans persister
+    }
+  };
 
   return (
-    <PatientContext.Provider
-      value={{
-        patientData,
-        setPatientData,
-        rawContent,
-        setRawContent,
-      }}
-    >
+    <PatientContext.Provider value={{ patientData, setPatientData, rawContent, setRawContent }}>
       {children}
     </PatientContext.Provider>
   );

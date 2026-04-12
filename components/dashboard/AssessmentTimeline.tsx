@@ -8,14 +8,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, CheckCircle2, Trash2 } from "lucide-react";
-
-interface Assessment {
-    id: string;
-    date: string;
-    label: string;
-    fileName: string;
-    metrics: Record<string, number>;
-}
+import { Assessment } from "@/types/assessment";
 
 interface AssessmentTimelineProps {
     assessments: Assessment[];
