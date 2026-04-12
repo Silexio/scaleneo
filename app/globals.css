@@ -149,3 +149,46 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm 10mm;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Supprime l'animation de conteneur */
+  .animate-in {
+    animation: none !important;
+  }
+
+  /* Grille : la colonne charts prend toute la largeur */
+  .print\:col-span-4 {
+    grid-column: span 4 / span 4;
+  }
+
+  /* Empêche les SVG Recharts de déborder de leur carte */
+  .recharts-wrapper,
+  .recharts-wrapper svg {
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Cache la légende (cercles) en impression */
+  .recharts-legend-wrapper {
+    display: none !important;
+  }
+
+  /* Garantit la compatibilité webkit pour break-inside */
+  .print\:break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+}

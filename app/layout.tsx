@@ -31,8 +31,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <PatientProvider>
-          <div className="container mx-auto p-4 sm:p-6 max-w-[1600px] space-y-6 sm:space-y-8">
-            <header className="bg-primary text-primary-foreground p-6 sm:p-8 rounded-xl shadow-lg text-center">
+          <div className="container mx-auto p-4 sm:p-6 max-w-[1600px] space-y-6 sm:space-y-8 print:p-0 print:space-y-0">
+            <header className="bg-primary text-primary-foreground p-6 sm:p-8 rounded-xl shadow-lg text-center print:hidden">
               <h1 className="text-xl sm:text-4xl font-extrabold mb-2 sm:mb-3 tracking-tight">
                 🚀 SCALENEO
               </h1>
@@ -41,7 +41,7 @@ export default function RootLayout({
               </p>
             </header>
 
-            <DashboardNavigation />
+            <div className="print:hidden"><DashboardNavigation /></div>
 
             <div className="animate-in fade-in-50 slide-in-from-bottom-2">
               {children}

@@ -26,7 +26,7 @@ export function MetricCard({ config, baselineValue, latestValue }: MetricCardPro
     const isSignificant = Math.abs(diff) >= config.mcid;
 
     return (
-        <Card className="shadow-sm overflow-hidden">
+        <Card className="shadow-sm overflow-hidden print:break-inside-avoid">
             <div
                 className="h-1 w-full"
                 style={{
