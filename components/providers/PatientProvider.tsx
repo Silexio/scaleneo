@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { PatientData } from "@/types/patient";
+import { STORAGE_KEYS } from "@/utils/storageKeys";
 
 interface PatientContextType {
   patientData: PatientData | null;
@@ -12,8 +13,6 @@ interface PatientContextType {
 
 const PatientContext = createContext<PatientContextType | undefined>(undefined);
 
-const STORAGE_KEY = "scaleneo_patient_data";
-const RAW_CONTENT_KEY = "scaleneo_raw_content";
 
 /**
  * Patient Provider Component
@@ -27,9 +26,9 @@ export function PatientProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(STORAGE_KEYS.patientData);
       if (stored) setPatientDataState(JSON.parse(stored) as PatientData);
-      const raw = localStorage.getItem(RAW_CONTENT_KEY);
+      const raw = localStorage.getItem(STORAGE_KEYS.rawContent);
       if (raw) setRawContentState(raw);
     } catch {
       // localStorage indisponible ou données corrompues — état vide
@@ -39,8 +38,8 @@ export function PatientProvider({ children }: { children: ReactNode }) {
   const setPatientData = (data: PatientData | null) => {
     setPatientDataState(data);
     try {
-      if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      else localStorage.removeItem(STORAGE_KEY);
+      if (data) localStorage.setItem(STORAGE_KEYS.patientData, JSON.stringify(data));
+      else localStorage.removeItem(STORAGE_KEYS.patientData);
     } catch {
       // quota dépassé — on continue sans persister
     }
@@ -49,8 +48,8 @@ export function PatientProvider({ children }: { children: ReactNode }) {
   const setRawContent = (content: string) => {
     setRawContentState(content);
     try {
-      if (content) localStorage.setItem(RAW_CONTENT_KEY, content);
-      else localStorage.removeItem(RAW_CONTENT_KEY);
+      if (content) localStorage.setItem(STORAGE_KEYS.rawContent, content);
+      else localStorage.removeItem(STORAGE_KEYS.rawContent);
     } catch {
       // quota dépassé — on continue sans persister
     }

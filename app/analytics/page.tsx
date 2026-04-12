@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -26,6 +26,7 @@ import { MetricCard } from "@/components/dashboard/MetricCard";
 import { MetricChart } from "@/components/dashboard/MetricChart";
 import { AssessmentTimeline } from "@/components/dashboard/AssessmentTimeline";
 import { Assessment } from "@/types/assessment";
+import { STORAGE_KEYS } from "@/utils/storageKeys";
 
 /**
  * Analytics Page Component
@@ -42,10 +43,32 @@ import { Assessment } from "@/types/assessment";
  * - Anxiety/Depression (HADS), Working Alliance (WAI)
  */
 export default function AnalyticsPage() {
-  const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [assessments, setAssessmentsState] = useState<Assessment[]>([]);
   const [newDate, setNewDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [newLabel, setNewLabel] = useState("");
   const [confirmingClear, setConfirmingClear] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.analyticsAssessments);
+      if (stored) setAssessmentsState(JSON.parse(stored) as Assessment[]);
+    } catch {
+      // données corrompues — on repart de zéro
+    }
+  }, []);
+
+  const setAssessments = (updater: Assessment[] | ((prev: Assessment[]) => Assessment[])) => {
+    setAssessmentsState((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      try {
+        localStorage.setItem(STORAGE_KEYS.analyticsAssessments, JSON.stringify(next));
+        window.dispatchEvent(new CustomEvent("scaleneo:analytics:update"));
+      } catch {
+        // quota dépassé
+      }
+      return next;
+    });
+  };
   const [isParsingFile, setIsParsingFile] = useState(false);
   const [metricsWarning, setMetricsWarning] = useState<string | null>(null);
 
@@ -100,7 +123,11 @@ export default function AnalyticsPage() {
   };
 
   const clearAll = () => {
-    setAssessments([]);
+    setAssessmentsState([]);
+    try {
+      localStorage.removeItem(STORAGE_KEYS.analyticsAssessments);
+      window.dispatchEvent(new CustomEvent("scaleneo:analytics:update"));
+    } catch { /* ignore */ }
     setConfirmingClear(false);
   };
 

@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { StableBold } from "@/components/ui/StableBold";
 import { usePatient } from "@/components/providers/PatientProvider";
+import { STORAGE_KEYS } from "@/utils/storageKeys";
 
 /**
  * DashboardNavigation Component
@@ -17,11 +19,26 @@ export function DashboardNavigation() {
   const pathname = usePathname();
   const { patientData } = usePatient();
   const hasPatient = !!patientData;
+  const [hasAnalytics, setHasAnalytics] = useState(false);
+
+  useEffect(() => {
+    const check = () => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEYS.analyticsAssessments);
+        setHasAnalytics(!!stored && (JSON.parse(stored) as unknown[]).length > 0);
+      } catch {
+        setHasAnalytics(false);
+      }
+    };
+    check();
+    window.addEventListener("scaleneo:analytics:update", check);
+    return () => window.removeEventListener("scaleneo:analytics:update", check);
+  }, []);
 
   const tabs = [
     { name: "📋 Extraction", href: "/extraction", id: "extraction", badge: false },
     { name: "📊 Résultats", href: "/results", id: "results", badge: hasPatient },
-    { name: "📈 Analytics", href: "/analytics", id: "analytics", badge: false },
+    { name: "📈 Analytics", href: "/analytics", id: "analytics", badge: hasAnalytics },
     { name: "💾 Export", href: "/export", id: "export", badge: hasPatient },
   ];
 
