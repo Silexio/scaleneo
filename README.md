@@ -71,7 +71,7 @@
 **Prerequisites**: Node.js 18+, pnpm
 
 ```bash
-git clone https://github.com/thesawkit/scaleneo.git
+git clone https://github.com/silexio/scaleneo.git
 cd scaleneo
 pnpm install
 pnpm dev
@@ -139,7 +139,7 @@ pnpm dev
 **Prérequis** : Node.js 18+, pnpm
 
 ```bash
-git clone https://github.com/thesawkit/scaleneo.git
+git clone https://github.com/silexio/scaleneo.git
 cd scaleneo
 pnpm install
 pnpm dev
@@ -153,4 +153,4 @@ Projet privé et propriétaire. Tous droits réservés.
 
 ---
 
-Made with ❤️ by [sawkit](https://github.com/thesawkit)
+Made with ❤️ by [Silexio](https://github.com/silexio)
