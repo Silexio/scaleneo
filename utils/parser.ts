@@ -1,31 +1,12 @@
 import type { PatientData } from "@/types/patient";
 
-/**
- * Patient Data Parser
- *
- * Robust parsing engine for clinical assessment forms.
- * Uses a declarative configuration-over-code approach.
- *
- * Supports:
- * - 18 sections of patient data
- * - Checkbox detection (☒, ☑, ☐, [x], [ ])
- * - NRS (pain scale) extraction
- * - Multi-value fields with pipe separation
- * - Automatic type conversion (boolean, number, string)
- */
-
 interface SectionData {
   [key: string]: string | string[] | boolean | number | null;
 }
 
 /**
- * Parser Configuration Mapping
- *
- * Maps search terms (found in text file) to property names in JSON output.
- * Key = Text to search for in file (case-insensitive)
- * Value = Property name in the final JSON object
- *
- * Example: "nom et prénom" in file -> "nomPatient" in JSON
+ * Maps search terms (found in the bilan text file) to property names in the JSON output.
+ * Key = text to search for in the file (case-insensitive), value = property name.
  */
 const PARSER_CONFIG: Record<string, Record<string, string>> = {
   "SECTION 1": {
@@ -78,6 +59,10 @@ const PARSER_CONFIG: Record<string, Record<string, string>> = {
     "flexion avant nrs": "flexionAvantNrs",
     "extension": "extension",
     "extension nrs": "extensionNrs",
+    "inclinaison latérale d": "inclinaisonDroit",
+    "inclinaison latérale d nrs": "inclinaisonDroitNrs",
+    "inclinaison latérale g": "inclinaisonGauche",
+    "inclinaison latérale g nrs": "inclinaisonGaucheNrs",
     "inclinaison d": "inclinaisonDroit",
     "inclinaison d nrs": "inclinaisonDroitNrs",
     "inclinaison g": "inclinaisonGauche",
@@ -86,6 +71,8 @@ const PARSER_CONFIG: Record<string, Record<string, string>> = {
     "rotation d nrs": "rotationDroitNrs",
     "rotation g": "rotationGauche",
     "rotation g nrs": "rotationGaucheNrs",
+    "combinaison de mouvements": "mouvementsCombines",
+    "combinaison de mouvements nrs": "mouvementsCombinesNrs",
     "mobilité segmentaire pa": "mobiliteSegmentaire",
     "mobilité segmentaire pa nrs": "mobiliteSegmentaireNrs",
     "hanche": "hanche",
@@ -271,238 +258,350 @@ const PARSER_CONFIG: Record<string, Record<string, string>> = {
   }
 };
 
-const CHECKBOX_REGEX = /(☒|☑|☐|\[x\]|\[ \])\s*([^☒☑☐\[\]|:]+)/g;
+const CHECKBOX_REGEX = /(☒|☑|☐|\[x\]|\[ \])\s*([^☒☑☐[\]|:]+)/gi;
+const CHECKBOX_MARKER = /☒|☑|☐|\[x\]|\[ \]/i;
+const EMOJI_NOISE = /[⚠️✅❌]/g;
+const PLACEHOLDER = /à remplir|auto-calc/i;
+
+const GENERIC_SUBFIELDS = new Set(["nrs", "localisation", "détails", "met", "debout", "marche", "scores"]);
+
+const NUMERIC_PROPS = new Set([
+  "anneeNaissance", "age", "poids", "taille", "imc",
+  "nrsRepos", "nrsActivite", "nrsMax",
+  "flexionAvantNrs", "extensionNrs", "inclinaisonDroitNrs", "inclinaisonGaucheNrs",
+  "rotationDroitNrs", "rotationGaucheNrs", "mouvementsCombinesNrs", "mobiliteSegmentaireNrs", "hancheNrs",
+  "slrDroit", "slrGauche", "asymetrieSlr",
+  "testSorensen", "testItoShirado", "coreStrengthIndex",
+  "scoreSBT", "scoreCSI", "scoreODI", "scorePCS", "scoreAnxiete", "scoreDepression",
+  "scoreFabqTravail", "scoreFabqActivite", "scoreWAI", "scoreIPAQ_MET",
+  "pgic", "satisfaction",
+  "dureeTotale", "frequence", "nbSeances",
+  "tempsAssis", "tempsDebout", "tempsMarche", "tempsAssisQuotidien", "tempsEcran"
+]);
 
 /**
- * PatientParser Class
+ * Parses SCALENEO clinical assessment text files into a structured PatientData object.
  *
- * Main parser for clinical assessment text files.
+ * Handles section headers, "Clé: valeur" lines, checkbox lines (☒/☑/☐/[x]),
+ * pipe-separated sub-fields (including nested "Clé: Sous-clé: valeur" forms),
+ * computes the auto-calc fields (IMC, asymétrie SLR, Core Strength Index)
+ * and normalizes numeric fields polluted by units, emojis or annotations.
+ *
+ * Section 18 (contrôle qualité) is recomputed from the actual extraction result:
+ * the self-reported values of the fiche are overwritten by measured coverage.
  */
 export class PatientParser {
 
-  /**
-   * Cleans and converts raw extracted values to appropriate types
-   *
-   * Handles:
-   * - Bracket removal: "[value]" -> "value"
-   * - Placeholder detection: "à remplir" -> null
-   * - Boolean conversion: "oui"/"yes" -> true, "non"/"no" -> false
-   * - Numeric conversion with unit stripping ("45 kg" -> 45)
-   * - Preserves strings as fallback
-   *
-   * @param raw - Raw extracted value from text
-   * @returns Cleaned value as string, boolean, number, or null
-   */
+  public static parse(fileContent: string): PatientData {
+    const result: Record<string, SectionData> = {};
+    for (let i = 1; i <= 18; i++) result[`section${i}`] = {};
+
+    let sectionConfig: Record<string, string> | null = null;
+    let currentSection: SectionData | null = null;
+    let lastProp: string | null = null;
+
+    for (const rawLine of fileContent.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line) continue;
+
+      const sectionMatch = line.match(/^=*\s*SECTION\s+(\d+)/i);
+      if (sectionMatch) {
+        sectionConfig = PARSER_CONFIG[`SECTION ${sectionMatch[1]}`] ?? null;
+        currentSection = result[`section${sectionMatch[1]}`] ?? null;
+        lastProp = null;
+        continue;
+      }
+      if (!sectionConfig || !currentSection) continue;
+
+      lastProp = this.parseLine(line, sectionConfig, currentSection, lastProp) ?? lastProp;
+    }
+
+    this.normalizeNumericFields(result);
+    this.computeAutoCalcFields(result);
+    this.computeQualityControl(result);
+    return result as unknown as PatientData;
+  }
+
+  private static parseLine(
+    line: string,
+    config: Record<string, string>,
+    section: SectionData,
+    lastProp: string | null
+  ): string | null {
+    const markerIndex = line.search(CHECKBOX_MARKER);
+    const colonIndex = line.indexOf(":");
+    const markerFirst = markerIndex !== -1 && (colonIndex === -1 || markerIndex < colonIndex);
+
+    if (markerFirst && line.slice(0, markerIndex).replace(/[-\s]/g, "") === "") {
+      this.parseCheckboxOnlyLine(line, config, section);
+      return null;
+    }
+
+    let keyZone: string;
+    let value: string;
+    if (markerFirst) {
+      keyZone = line.slice(0, markerIndex);
+      value = line.slice(markerIndex);
+    } else if (colonIndex !== -1) {
+      keyZone = line.slice(0, colonIndex);
+      value = line.slice(colonIndex + 1);
+    } else {
+      return null;
+    }
+
+    const foundKey = this.findConfigKey(keyZone.trim().toLowerCase(), config);
+    if (!foundKey) return null;
+
+    let targetProp = config[foundKey];
+    if (targetProp === "typesExercices" && lastProp === "hasNeurodynamique") {
+      targetProp = "typesNeurodynamique";
+    }
+
+    this.assignValue(value, foundKey, targetProp, config, section);
+    return targetProp;
+  }
+
+  private static findConfigKey(keyZone: string, config: Record<string, string>): string | undefined {
+    return Object.keys(config)
+      .filter(k => keyZone.includes(k.toLowerCase()))
+      .sort((a, b) => b.length - a.length)[0];
+  }
+
+  private static parseCheckboxOnlyLine(
+    line: string,
+    config: Record<string, string>,
+    section: SectionData
+  ): void {
+    for (const m of line.matchAll(new RegExp(CHECKBOX_REGEX.source, CHECKBOX_REGEX.flags))) {
+      const label = (m[2] || "").trim().replace(/[.,]$/, "").toLowerCase();
+      const key = Object.keys(config)
+        .filter(k => label.includes(k.toLowerCase()))
+        .sort((a, b) => b.length - a.length)[0];
+      if (key) section[config[key]] = this.isChecked(m[1]);
+    }
+  }
+
+  private static assignValue(
+    value: string,
+    foundKey: string,
+    targetProp: string,
+    config: Record<string, string>,
+    section: SectionData
+  ): void {
+    if (PLACEHOLDER.test(value) && value.toLowerCase().includes("auto-calc")) {
+      section[targetProp] = null;
+      return;
+    }
+
+    const mainParts: string[] = [];
+    for (const segment of value.split("|").map(s => s.trim()).filter(Boolean)) {
+      const remainder = this.consumeSubField(segment, foundKey, targetProp, config, section, mainParts.length > 0);
+      if (remainder !== null) mainParts.push(remainder);
+    }
+
+    section[targetProp] = mainParts.length ? this.extractValue(mainParts.join(" | ")) : null;
+  }
+
+  private static consumeSubField(
+    segment: string,
+    foundKey: string,
+    targetProp: string,
+    config: Record<string, string>,
+    section: SectionData,
+    hasMain: boolean
+  ): string | null {
+    const colonIndex = segment.indexOf(":");
+    if (colonIndex === -1) return this.consumeKeyPrefixedSegment(segment, targetProp, config, section);
+
+    const name = segment.slice(0, colonIndex).trim();
+    const segValue = segment.slice(colonIndex + 1).trim();
+    const cleanName = name.replace(new RegExp(CHECKBOX_MARKER.source, "gi"), "").trim().toLowerCase();
+    if (!cleanName) return segment;
+
+    if (CHECKBOX_MARKER.test(name)) {
+      const exactKey = Object.keys(config).find(k => k.toLowerCase() === cleanName);
+      if (exactKey && config[exactKey] !== targetProp) {
+        const marker = name.match(CHECKBOX_MARKER)?.[0] ?? "☐";
+        section[config[exactKey]] = segValue ? this.extractValue(segValue) : this.isChecked(marker);
+        return null;
+      }
+      return segment;
+    }
+
+    const normalized = this.normalizeSubFieldName(cleanName);
+    const prop = this.resolveSubFieldProp(normalized, cleanName, foundKey, config);
+
+    if (prop && prop !== targetProp) {
+      section[prop] = segValue ? this.extractValue(segValue) : true;
+      return null;
+    }
+    if (prop === targetProp && !hasMain) return segValue;
+
+    const parsed = this.cleanValue(segValue);
+    const isDescriptiveLabel = GENERIC_SUBFIELDS.has(normalized)
+      || typeof parsed === "number"
+      || typeof parsed === "boolean";
+    return !hasMain && isDescriptiveLabel ? segValue : segment;
+  }
+
+  private static consumeKeyPrefixedSegment(
+    segment: string,
+    targetProp: string,
+    config: Record<string, string>,
+    section: SectionData
+  ): string | null {
+    if (CHECKBOX_MARKER.test(segment)) return segment;
+
+    const lower = segment.toLowerCase();
+    const key = Object.keys(config)
+      .filter(k => {
+        const kl = k.toLowerCase();
+        return lower.startsWith(kl) && lower.length > kl.length && /\s/.test(lower[kl.length]);
+      })
+      .sort((a, b) => b.length - a.length)[0];
+
+    if (!key || config[key] === targetProp || section[config[key]] != null) return segment;
+
+    const rest = segment.slice(key.length).trim();
+    if (!rest) return segment;
+
+    section[config[key]] = this.extractValue(rest);
+    return null;
+  }
+
+  private static normalizeSubFieldName(name: string): string {
+    if (name.includes("scores")) return "scores";
+    if (name.includes("nrs") || name.includes("score")) return "nrs";
+    if (name.includes("localisation")) return "localisation";
+    if (name.includes("détail")) return "détails";
+    if (name.includes("debout")) return "debout";
+    if (name.includes("marche")) return "marche";
+    if (name.includes("met")) return "met";
+    return name;
+  }
+
+  private static resolveSubFieldProp(
+    normalized: string,
+    cleanName: string,
+    foundKey: string,
+    config: Record<string, string>
+  ): string | null {
+    const contextKey = `${foundKey} ${normalized}`.toLowerCase();
+    const precise = Object.keys(config)
+      .filter(k => k.toLowerCase() === contextKey || k.toLowerCase().includes(contextKey))
+      .sort((a, b) => b.length - a.length)[0];
+    if (precise) return config[precise];
+
+    const fuzzy = Object.keys(config)
+      .filter(k => {
+        const kl = k.toLowerCase();
+        if (kl.includes(" ") && !normalized.includes(" ")) return false;
+        return normalized.includes(kl) || kl.includes(normalized) || cleanName.includes(kl);
+      })
+      .sort((a, b) => b.length - a.length)[0];
+    return fuzzy ? config[fuzzy] : null;
+  }
+
+  private static extractValue(text: string): string | boolean | number | null {
+    const labels: string[] = [];
+    let foundCheckbox = false;
+
+    for (const m of text.matchAll(new RegExp(CHECKBOX_REGEX.source, CHECKBOX_REGEX.flags))) {
+      foundCheckbox = true;
+      const label = (m[2] || "").trim().replace(/[.,]$/, "");
+      if (this.isChecked(m[1]) && label) labels.push(label);
+    }
+
+    if (!foundCheckbox) {
+      if (CHECKBOX_MARKER.test(text)) return null;
+      return this.cleanValue(text);
+    }
+    if (labels.length === 0) return null;
+    return labels.length === 1 ? this.cleanValue(labels[0]) : labels.join(", ");
+  }
+
   private static cleanValue(raw: string): string | boolean | number | null {
     if (!raw) return null;
-    let val = raw.trim();
 
-    if (val.startsWith("[") && val.endsWith("]")) val = val.slice(1, -1).trim();
-    if (val === "" || val.toLowerCase().includes("à remplir")) return null;
+    const val = raw
+      .replace(/\[([^\][]*)\]/g, "$1")
+      .replace(EMOJI_NOISE, " ")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    if (val === "" || PLACEHOLDER.test(val)) return null;
 
     const lower = val.toLowerCase();
     if (["oui", "yes", "true", "vrai"].includes(lower)) return true;
     if (["non", "no", "false", "faux"].includes(lower)) return false;
 
-    const cleanVal = val.toLowerCase().replace(/\s*(ans|years|kg\.?|cm\.?)\s*$/, "").trim();
-
-    const num = Number(cleanVal);
-    if (!isNaN(num) && cleanVal !== "" && !cleanVal.includes(" ")) return num;
+    const unitless = lower.replace(/\s*(ans|years|kg\.?|cm\.?|s|sec|secondes?|°|degrés?)\s*$/, "").trim();
+    const num = Number(unitless.replace(",", "."));
+    if (unitless !== "" && !unitless.includes(" ") && !isNaN(num)) return num;
 
     return val;
   }
 
-  /**
-   * Extracts checked labels from checkbox syntax, or cleans plain text value.
-   * Returns null if checkboxes found but none checked.
-   */
-  private static extractValue(text: string): string | boolean | number | null {
-    const labels: string[] = [];
-    let m: RegExpExecArray | null;
-    let foundCheckbox = false;
-    const regex = new RegExp(CHECKBOX_REGEX.source, CHECKBOX_REGEX.flags);
-
-    while ((m = regex.exec(text)) !== null) {
-      foundCheckbox = true;
-      const marker = m[1];
-      const label = (m[2] || "").trim().replace(/[.,]$/g, "");
-      const isChecked = marker === "☒" || marker === "☑" || marker.toLowerCase() === "[x]";
-      if (isChecked && label) labels.push(label);
-    }
-
-    if (foundCheckbox) {
-      if (labels.length === 0) return null;
-      return labels.length === 1 ? labels[0] : labels.join(", ");
-    }
-    return this.cleanValue(text);
+  private static isChecked(marker: string): boolean {
+    return marker === "☒" || marker === "☑" || marker.toLowerCase() === "[x]";
   }
 
-  /**
-   * Processes pipe-separated sub-fields on a line and maps them to section properties.
-   * Handles both precise context key lookups and fuzzy field name matching.
-   */
-  private static processAdditionalFields(
-    trimmedLine: string,
-    foundKey: string,
-    targetProp: string,
-    currentSection: SectionData,
-    sectionConfig: Record<string, string>
-  ): void {
-    const additionalFieldsRegex = /(?:^|\|)\s*([^:|]+)(?::\s*([^|]+))?/g;
-    let fieldMatch: RegExpExecArray | null;
+  private static toNumeric(
+    value: string | string[] | boolean | number | null
+  ): string | string[] | boolean | number | null {
+    if (typeof value !== "string") return value;
+    const match = value.replace(EMOJI_NOISE, "").trim().match(/^(-?\d+(?:[.,]\d+)?)/);
+    return match ? Number(match[1].replace(",", ".")) : value;
+  }
 
-    while ((fieldMatch = additionalFieldsRegex.exec(trimmedLine)) !== null) {
-      const fieldName = (fieldMatch[1] || "").trim().toLowerCase();
-      const rawFieldValue = (fieldMatch[2] || "").trim();
-
-      if (!fieldName) continue;
-
-      let normalizedField = fieldName;
-      if (fieldName.includes("nrs") || fieldName.includes("score")) normalizedField = "nrs";
-      else if (fieldName.includes("localisation")) normalizedField = "localisation";
-      else if (fieldName.includes("détail")) normalizedField = "détails";
-      else if (fieldName.includes("met")) normalizedField = "met";
-      else if (fieldName.includes("debout")) normalizedField = "debout";
-      else if (fieldName.includes("marche")) normalizedField = "marche";
-      else if (fieldName.includes("scores")) normalizedField = "scores";
-
-      const contextSearchKey = `${foundKey} ${normalizedField}`.toLowerCase();
-      const preciseContextKey = Object.keys(sectionConfig).find(k =>
-        contextSearchKey === k.toLowerCase() || k.toLowerCase().includes(contextSearchKey)
-      );
-
-      if (preciseContextKey) {
-        const additionalProp = sectionConfig[preciseContextKey];
-        currentSection[additionalProp] = rawFieldValue ? this.extractValue(rawFieldValue) : true;
-      } else {
-        const additionalFieldKey = Object.keys(sectionConfig).find(k => {
-          if (k.includes(" ") && !normalizedField.includes(" ")) return false;
-          return normalizedField.includes(k.toLowerCase()) ||
-            k.toLowerCase().includes(normalizedField) ||
-            fieldName.includes(k.toLowerCase());
-        });
-
-        if (additionalFieldKey) {
-          const additionalProp = sectionConfig[additionalFieldKey];
-          if (additionalProp !== targetProp) {
-            currentSection[additionalProp] = rawFieldValue ? this.extractValue(rawFieldValue) : true;
-          }
-        }
+  private static normalizeNumericFields(result: Record<string, SectionData>): void {
+    for (const section of Object.values(result)) {
+      for (const prop of Object.keys(section)) {
+        if (NUMERIC_PROPS.has(prop)) section[prop] = this.toNumeric(section[prop]);
       }
     }
   }
 
-  /**
-   * Main parsing method
-   *
-   * Parses clinical assessment text file into structured PatientData object.
-   *
-   * Process:
-   * 1. Detects section headers (SECTION 1, SECTION 2, etc.)
-   * 2. Extracts key-value pairs ("Field Name: value")
-   * 3. Detects and processes checkboxes (☒, ☑, ☐)
-   * 4. Handles multi-value fields with pipe separators
-   * 5. Extracts NRS scores and additional sub-fields
-   *
-   * @param fileContent - Raw text content from the assessment file
-   * @returns Structured PatientData object with 18 sections
-   */
-  public static parse(fileContent: string): PatientData {
-    const result: Record<string, SectionData> = {};
-    for (let i = 1; i <= 18; i++) result[`section${i}`] = {};
+  private static computeAutoCalcFields(result: Record<string, SectionData>): void {
+    const s2 = result.section2;
+    if (s2.imc == null && typeof s2.poids === "number" && typeof s2.taille === "number") {
+      const metres = s2.taille > 3 ? s2.taille / 100 : s2.taille;
+      if (metres > 0) s2.imc = Math.round((s2.poids / (metres * metres)) * 10) / 10;
+    }
 
-    const lines = fileContent.split(/\r?\n/);
-    let currentSectionNum: string | null = null;
-    let currentSectionConfig: Record<string, string> | null = null;
+    const s6 = result.section6;
+    if (s6.asymetrieSlr == null && typeof s6.slrDroit === "number" && typeof s6.slrGauche === "number") {
+      s6.asymetrieSlr = Math.abs(s6.slrDroit - s6.slrGauche);
+    }
+    if (
+      s6.coreStrengthIndex == null &&
+      typeof s6.testItoShirado === "number" &&
+      typeof s6.testSorensen === "number" &&
+      s6.testSorensen > 0
+    ) {
+      s6.coreStrengthIndex = Math.round((s6.testItoShirado / s6.testSorensen) * 100) / 100;
+    }
+  }
 
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-      if (!trimmedLine) continue;
+  private static computeQualityControl(result: Record<string, SectionData>): void {
+    let total = 0;
+    let filled = 0;
+    let unresolved = 0;
 
-      const sectionMatch = trimmedLine.match(/^={0,}\s*SECTION\s+(\d+)/i);
-      if (sectionMatch) {
-        currentSectionNum = sectionMatch[1];
-        currentSectionConfig = PARSER_CONFIG[`SECTION ${currentSectionNum}`] || null;
-        continue;
-      }
-
-      if (!currentSectionConfig || !currentSectionNum) continue;
-
-      const currentSection = result[`section${currentSectionNum}`];
-
-      if (trimmedLine.includes(":")) {
-        const separatorIndex = trimmedLine.indexOf(":");
-        const rawKey = trimmedLine.substring(0, separatorIndex).trim().toLowerCase();
-        const rawValue = trimmedLine.substring(separatorIndex + 1);
-
-        const foundKey = Object.keys(currentSectionConfig)
-          .filter(k => rawKey.includes(k.toLowerCase()))
-          .sort((a, b) => b.length - a.length)[0];
-
-        if (foundKey) {
-          const targetProp = currentSectionConfig[foundKey];
-          const checkboxRegex = new RegExp(CHECKBOX_REGEX.source, CHECKBOX_REGEX.flags);
-          const checkedLabels: string[] = [];
-          let m: RegExpExecArray | null;
-
-          while ((m = checkboxRegex.exec(rawValue)) !== null) {
-            const marker = m[1];
-            const label = (m[2] || "").trim().replace(/[.,]$/g, "");
-            const isChecked = marker === "☒" || marker === "☑" || marker.toLowerCase() === "[x]";
-            if (isChecked && label) checkedLabels.push(label);
-          }
-
-          if (checkedLabels.length > 0) {
-            currentSection[targetProp] = checkedLabels.length === 1 ? checkedLabels[0] : checkedLabels.join(", ");
-          } else {
-            const hasCheckboxes = /(☒|☑|☐|\[x\]|\[ \])/.test(rawValue);
-            currentSection[targetProp] = hasCheckboxes ? null : this.cleanValue(rawValue);
-          }
-
-          this.processAdditionalFields(trimmedLine, foundKey, targetProp, currentSection, currentSectionConfig);
-        }
-      } else if (
-        trimmedLine.startsWith("☐") ||
-        trimmedLine.startsWith("☑") ||
-        trimmedLine.startsWith("☒") ||
-        trimmedLine.startsWith("[x]") ||
-        trimmedLine.startsWith("- [ ]") ||
-        trimmedLine.startsWith("- [x]")
-      ) {
-        const lowerLine = trimmedLine.toLowerCase();
-        const foundKey = Object.keys(currentSectionConfig).find(k => lowerLine.includes(k));
-
-        if (foundKey) {
-          const targetProp = currentSectionConfig[foundKey];
-          const checkboxRegex = new RegExp(CHECKBOX_REGEX.source, CHECKBOX_REGEX.flags);
-          const allMatches = [...trimmedLine.matchAll(checkboxRegex)];
-          const isSingleCheckbox = allMatches.length === 1;
-          const checkedLabels: string[] = [];
-
-          for (const m of allMatches) {
-            const marker = m[1];
-            let label = (m[2] || "").trim().replace(/[.,]$/g, "");
-            const isChecked = marker === "☒" || marker === "☑" || marker.toLowerCase() === "[x]";
-
-            if (isSingleCheckbox) {
-              const keyRegex = new RegExp(foundKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-              label = label.replace(keyRegex, "").trim();
-              const prefix = isChecked ? "Oui" : "Non";
-              checkedLabels.push(label ? `${prefix} | ${label}` : prefix);
-            } else {
-              if (isChecked && label) checkedLabels.push(label);
-            }
-          }
-
-          currentSection[targetProp] = checkedLabels.length > 0
-            ? (checkedLabels.length === 1 ? checkedLabels[0] : checkedLabels.join(", "))
-            : null;
-
-          this.processAdditionalFields(trimmedLine, foundKey, targetProp, currentSection, currentSectionConfig);
-        }
+    for (let i = 1; i <= 17; i++) {
+      const section = result[`section${i}`];
+      for (const prop of new Set(Object.values(PARSER_CONFIG[`SECTION ${i}`]))) {
+        total++;
+        const val = section[prop];
+        if (val === null || val === undefined || val === "") continue;
+        filled++;
+        if (typeof val === "string" && PLACEHOLDER.test(val)) unresolved++;
       }
     }
 
-    return result as unknown as PatientData;
+    const pct = total > 0 ? Math.round((filled / total) * 100) : 0;
+    const s18 = result.section18;
+    s18.confianceExtraction = `${pct}%`;
+    s18.isComplete = filled === total && unresolved === 0;
+    s18.needsReview = pct < 90 || unresolved > 0;
   }
 }

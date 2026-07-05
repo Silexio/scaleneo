@@ -175,7 +175,7 @@ Thérapie par Exercice (Oui/Non): [À remplir: 1 ou 0]
   Types Exercices: [À remplir]
 
 Thérapie par Neurodynamique (Oui/Non): [À remplir: 1 ou 0]
-  Types Exercices: [À remplir]
+  Types Neuro si Oui: [À remplir]
 
 Éducation Patient (Oui/Non): [À remplir: 1 ou 0]
   Sujets Éducation: [À remplir]

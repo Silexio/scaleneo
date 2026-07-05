@@ -32,11 +32,11 @@ export interface Section2 {
 
 export interface Section3 {
   antecedentsLBP?: boolean | string;
-  episodeInitial?: string;
+  episodeInitial?: string | number;
   modeApparition?: string;
   recidive?: boolean | string;
   pireEpisode?: string;
-  dureeTotale?: string;
+  dureeTotale?: string | number;
   typeLBP?: string;
 }
 
@@ -52,11 +52,11 @@ export interface Section4 {
 }
 
 export interface Section5 {
-  douleurArticulaire?: boolean | string;
-  douleurMyofasciale?: boolean | string;
-  douleurNeurologique?: boolean | string;
+  douleurArticulaire?: boolean | string | number;
+  douleurMyofasciale?: boolean | string | number;
+  douleurNeurologique?: boolean | string | number;
   sensibilisationCentrale?: boolean | string;
-  deficitSensorimoteur?: boolean | string;
+  deficitSensorimoteur?: boolean | string | number;
   caractereSensations?: string;
   observationsMecanismes?: string;
 }
@@ -64,31 +64,31 @@ export interface Section5 {
 export interface Section6 {
   // Mobilité
   flexionAvant?: string;
-  flexionAvantNrs?: string;
+  flexionAvantNrs?: string | number;
   extension?: string;
-  extensionNrs?: string;
+  extensionNrs?: string | number;
   inclinaisonDroit?: string;
-  inclinaisonDroitNrs?: string;
+  inclinaisonDroitNrs?: string | number;
   inclinaisonGauche?: string;
-  inclinaisonGaucheNrs?: string;
+  inclinaisonGaucheNrs?: string | number;
   rotationDroit?: string;
-  rotationDroitNrs?: string;
+  rotationDroitNrs?: string | number;
   rotationGauche?: string;
-  rotationGaucheNrs?: string;
+  rotationGaucheNrs?: string | number;
   mouvementsCombines?: string;
-  mouvementsCombinesNrs?: string;
+  mouvementsCombinesNrs?: string | number;
   mobiliteSegmentaire?: string;
-  mobiliteSegmentaireNrs?: string;
+  mobiliteSegmentaireNrs?: string | number;
   hanche?: string;
-  hancheNrs?: string;
+  hancheNrs?: string | number;
   // Neuro Specifique
-  slrDroit?: string;
-  slrGauche?: string;
-  asymetrieSlr?: string;
+  slrDroit?: string | number;
+  slrGauche?: string | number;
+  asymetrieSlr?: string | number;
   slumpTest?: string;
   pkb?: string;
   forceMusculaire?: string;
-  reflexes?: string;
+  reflexes?: boolean | string;
   sensation?: string;
   sensationLocalisation?: string;
   profilSensoriel?: string;
@@ -100,13 +100,13 @@ export interface Section6 {
   spasmeLocalisation?: string;
   localisation?: string;
   signesMeninges?: string;
-  hypersensibilitePression?: string;
-  zoneLombaire?: string;
-  zoneControle?: string;
+  hypersensibilitePression?: boolean | string;
+  zoneLombaire?: boolean | string;
+  zoneControle?: boolean | string;
   // Tests Endurance
-  testSorensen?: string;
-  testItoShirado?: string;
-  coreStrengthIndex?: string;
+  testSorensen?: string | number;
+  testItoShirado?: string | number;
+  coreStrengthIndex?: string | number;
   sidePlank?: string;
   controlSensoriMoteur?: string;
 }
@@ -122,7 +122,7 @@ export interface Section7 {
   scoreFabqActivite?: string | number;
   scoreWAI?: string | number;
   scoreIPAQ?: string;
-  scoreIPAQ_MET?: string;
+  scoreIPAQ_MET?: string | number;
   scorePSFS?: string;
   scorePSFS_Scores?: string;
   qualiteVie?: string;
@@ -156,14 +156,14 @@ export interface Section9 {
 }
 
 export interface Section10 {
-  frequence?: string;
-  hasTherapieManuelle?: boolean | string;
+  frequence?: string | number;
+  hasTherapieManuelle?: boolean | string | number;
   typesTherapieManuelle?: string;
-  hasExercices?: boolean | string;
+  hasExercices?: boolean | string | number;
   typesExercices?: string;
-  hasNeurodynamique?: boolean | string;
+  hasNeurodynamique?: boolean | string | number;
   typesNeurodynamique?: string;
-  hasEducation?: boolean | string;
+  hasEducation?: boolean | string | number;
   sujetsEducation?: string;
   modalitesSup?: string;
 }
@@ -178,7 +178,7 @@ export interface Section11 {
 
 export interface Section12 {
   dureeTraitement?: string;
-  nbSeances?: string;
+  nbSeances?: string | number;
   facteursPositifs?: string;
   facteursNegatifs?: string;
   objectifsCourtTerme?: string;
@@ -190,7 +190,7 @@ export interface Section12 {
   soutienSocial?: string;
   detailSoutien?: string;
   stresseurs?: string;
-  pointReevaluation?: string;
+  pointReevaluation?: string | number;
   criteresChangement?: string;
   orientationSpecialise?: boolean;
   barrieresTraitement?: string;
@@ -201,11 +201,11 @@ export interface Section13 {
   loisirs?: string;
   activitesAnterieures?: string;
   activitesActuelles?: string;
-  tempsAssis?: string;
-  tempsDebout?: string;
-  tempsMarche?: string;
-  tempsAssisQuotidien?: string;
-  tempsEcran?: string;
+  tempsAssis?: string | number;
+  tempsDebout?: string | number;
+  tempsMarche?: string | number;
+  tempsAssisQuotidien?: string | number;
+  tempsEcran?: string | number;
   sedentarite?: string;
   statutPro?: string;
   joursAbsence?: string;
@@ -225,13 +225,13 @@ export interface Section14 {
   facteursLifestyle?: string;
   facteursHormonaux?: string;
   ergonomieTravail?: boolean;
-  posteOptimise?: string;
+  posteOptimise?: boolean | string;
   recommandationsErgonomie?: string;
   facteursPsycho?: string;
   systemeSante?: string;
   conceptionBiopsychosociale?: string;
   attentesCulturelles?: boolean;
-  attenteGuerisonRapide?: string;
+  attenteGuerisonRapide?: boolean | string;
   approchePreferee?: string;
   compliance?: string;
   barrieresCompliance?: string;

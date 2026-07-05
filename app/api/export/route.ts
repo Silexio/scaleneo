@@ -2,32 +2,27 @@ import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { unflattenDotObject } from "@/utils/objectHelpers";
 
-/**
- * Ordered category list for organizing exported data
- * Ensures consistent section ordering in CSV and XLSX exports
- */
-const ORDERED_CATEGORIES = [
-    "ADMIN",
-    "ANTHROPO",
-    "PATHOLOGIE",
-    "SYMPTOMES",
-    "MECANISMES",
-    "TESTS",
-    "SCORES",
-    "REDFLAGS",
-    "GESTION",
-    "PRONOSTIC",
-    "OBSERVATIONS",
-    "HYPOTHESE"
-];
+const SECTION_LABELS: Record<string, string> = {
+    section1: "ADMIN",
+    section2: "ANTHROPO",
+    section3: "PATHOLOGIE",
+    section4: "SYMPTOMES",
+    section5: "MECANISMES",
+    section6: "TESTS",
+    section7: "SCORES",
+    section8: "REDFLAGS",
+    section9: "MOTIFS",
+    section10: "GESTION",
+    section11: "CROYANCES",
+    section12: "PRONOSTIC",
+    section13: "ACTIVITES",
+    section14: "FACTEURS",
+    section15: "SATISFACTION",
+    section16: "OBSERVATIONS",
+    section17: "HYPOTHESE",
+    section18: "QUALITE"
+};
 
-/**
- * Creates a worksheet and adds it to the workbook
- *
- * @param wb - Excel workbook to append sheet to
- * @param sheetName - Name of the sheet (max 31 characters)
- * @param data - Array of objects to populate sheet
- */
 function createSheet(
     wb: XLSX.WorkBook,
     sheetName: string,
@@ -35,20 +30,21 @@ function createSheet(
 ) {
     const ws = XLSX.utils.json_to_sheet(data);
     ws['!cols'] = [{ wch: 30 }, { wch: 80 }];
-    const safeName = sheetName.substring(0, 31);
-    XLSX.utils.book_append_sheet(wb, ws, safeName);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31));
 }
 
 /**
  * POST /api/export
  *
- * Exports patient data in requested format (CSV, XLSX, or JSON)
+ * Exports patient data in the requested format.
  *
  * Request body:
- * - data: Flattened patient data object with dot-notation keys
- * - format: Export format ('csv' | 'xlsx' | 'json')
+ * - data: flattened patient data object with dot-notation keys
+ * - format: 'csv' | 'xlsx' | 'json'
  *
- * Response: Binary file with appropriate Content-Type and filename
+ * CSV: flat table (1 header row + 1 row per patient) directly usable for statistics.
+ * XLSX: a SYNTHESE flat sheet followed by one Champ/Valeur sheet per section.
+ * JSON: nested structure identical to the parsed PatientData object.
  */
 export async function POST(request: NextRequest) {
     try {
@@ -62,7 +58,6 @@ export async function POST(request: NextRequest) {
             data = body.data;
             format = body.format;
         } else {
-            // Support legacy FormData format
             const formData = await request.formData();
             const payloadString = formData.get("payload") as string;
 
@@ -89,87 +84,41 @@ export async function POST(request: NextRequest) {
         const cleanName = patientName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
         const cleanId = patientId.replace(/[^a-z0-9]/gi, '_').toLowerCase();
 
-        const baseName = [cleanName, cleanId].filter(Boolean).join('_') || 'export_scalenoe';
+        const baseName = [cleanName, cleanId].filter(Boolean).join('_') || 'export_scaleneo';
         const dateStr = new Date().toISOString().split('T')[0];
         const filenamePre = `export_${baseName}_${dateStr}`;
 
         if (format === "csv") {
-            const categories = categorizeData(data);
-            let csvContent = "";
-            ORDERED_CATEGORIES.forEach(cat => {
-                if (categories[cat]) {
-                    csvContent += `\n=== ${cat} ===\n`;
-                    const worksheet = XLSX.utils.json_to_sheet(categories[cat]);
-                    const csv = XLSX.utils.sheet_to_csv(worksheet);
-                    csvContent += csv;
-                    delete categories[cat];
-                }
-            });
+            const flatSheet = XLSX.utils.json_to_sheet([data]);
+            const csvContent = XLSX.utils.sheet_to_csv(flatSheet);
+            const csvBuffer = Buffer.from('\uFEFF' + csvContent, 'utf-8');
 
-            Object.keys(categories).forEach(cat => {
-                csvContent += `\n=== ${cat} ===\n`;
-                const worksheet = XLSX.utils.json_to_sheet(categories[cat]);
-                const csv = XLSX.utils.sheet_to_csv(worksheet);
-                csvContent += csv;
-            });
-
-            const BOM = '\uFEFF';
-            const csvWithBOM = BOM + csvContent;
-            const csvBuffer = Buffer.from(csvWithBOM, 'utf-8');
-
-            const filename = `${filenamePre}.csv`;
-            return new NextResponse(csvBuffer, {
-                status: 200,
-                headers: {
-                    "Content-Disposition": `attachment; filename="${filename}"`,
-                    "Content-Type": "text/csv;charset=utf-8",
-                    "Content-Length": csvBuffer.length.toString(),
-                },
-            });
+            return fileResponse(csvBuffer, `${filenamePre}.csv`, "text/csv;charset=utf-8");
         }
 
         if (format === "xlsx") {
             const workbook = XLSX.utils.book_new();
-            const categories = categorizeData(data);
-            ORDERED_CATEGORIES.forEach(cat => {
-                if (categories[cat]) {
-                    createSheet(workbook, cat, categories[cat]);
-                    delete categories[cat];
-                }
-            });
+            XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([data]), "SYNTHESE");
 
-            Object.keys(categories).forEach(cat => {
-                createSheet(workbook, cat, categories[cat]);
-            });
+            for (const [category, rows] of Object.entries(categorizeData(data))) {
+                createSheet(workbook, category, rows);
+            }
 
             const b64 = XLSX.write(workbook, { type: "base64", bookType: "xlsx" });
             const buffer = Buffer.from(b64, "base64");
 
-            const filename = `${filenamePre}.xlsx`;
-            return new NextResponse(buffer, {
-                status: 200,
-                headers: {
-                    "Content-Disposition": `attachment; filename="${filename}"`,
-                    "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    "Content-Length": buffer.length.toString(),
-                },
-            });
+            return fileResponse(
+                buffer,
+                `${filenamePre}.xlsx`,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            );
         }
 
         if (format === "json") {
             const nested = unflattenDotObject(data);
-            const json = JSON.stringify(nested, null, 2);
-            const jsonBuffer = Buffer.from(json, "utf-8");
+            const jsonBuffer = Buffer.from(JSON.stringify(nested, null, 2), "utf-8");
 
-            const filename = `${filenamePre}.json`;
-            return new NextResponse(jsonBuffer, {
-                status: 200,
-                headers: {
-                    "Content-Disposition": `attachment; filename="${filename}"`,
-                    "Content-Type": "application/json;charset=utf-8",
-                    "Content-Length": jsonBuffer.length.toString(),
-                },
-            });
+            return fileResponse(jsonBuffer, `${filenamePre}.json`, "application/json;charset=utf-8");
         }
 
         return NextResponse.json(
@@ -185,23 +134,25 @@ export async function POST(request: NextRequest) {
     }
 }
 
-/**
- * Categorizes flattened data by section prefix
- *
- * Converts dot-notation keys like "section1.nomPatient" into categorized groups
- * - Keys with dots are grouped by their prefix (e.g., "section1" → "SECTION1")
- * - Keys without dots go into "GENERAL" category
- *
- * @param data - Flattened data object with dot-notation keys
- * @returns Object mapping category names to arrays of field/value pairs
- */
+function fileResponse(buffer: Buffer, filename: string, mimeType: string): NextResponse {
+    return new NextResponse(new Uint8Array(buffer), {
+        status: 200,
+        headers: {
+            "Content-Disposition": `attachment; filename="${filename}"`,
+            "Content-Type": mimeType,
+            "Content-Length": buffer.length.toString(),
+        },
+    });
+}
+
 function categorizeData(data: Record<string, unknown>): Record<string, Record<string, unknown>[]> {
     const categories: Record<string, Record<string, unknown>[]> = {};
 
     for (const [key, value] of Object.entries(data)) {
         const parts = key.split('.');
-        const categoryName = parts.length > 1 ? parts[0].toUpperCase() : "GENERAL";
-        const fieldName = parts.length > 1 ? parts.slice(1).join(' ') : key;
+        const prefix = parts.length > 1 ? parts[0] : null;
+        const categoryName = prefix ? (SECTION_LABELS[prefix] ?? prefix.toUpperCase()) : "GENERAL";
+        const fieldName = prefix ? parts.slice(1).join(' ') : key;
 
         if (!categories[categoryName]) {
             categories[categoryName] = [];

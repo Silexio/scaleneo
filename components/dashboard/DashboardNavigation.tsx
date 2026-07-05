@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { StableBold } from "@/components/ui/StableBold";
 import { usePatient } from "@/components/providers/PatientProvider";
-import { STORAGE_KEYS } from "@/utils/storageKeys";
+import { useAssessments } from "@/hooks/useAssessments";
 
 /**
  * DashboardNavigation Component
@@ -18,22 +17,9 @@ import { STORAGE_KEYS } from "@/utils/storageKeys";
 export function DashboardNavigation() {
   const pathname = usePathname();
   const { patientData } = usePatient();
+  const { assessments } = useAssessments();
   const hasPatient = !!patientData;
-  const [hasAnalytics, setHasAnalytics] = useState(false);
-
-  useEffect(() => {
-    const check = () => {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEYS.analyticsAssessments);
-        setHasAnalytics(!!stored && (JSON.parse(stored) as unknown[]).length > 0);
-      } catch {
-        setHasAnalytics(false);
-      }
-    };
-    check();
-    window.addEventListener("scaleneo:analytics:update", check);
-    return () => window.removeEventListener("scaleneo:analytics:update", check);
-  }, []);
+  const hasAnalytics = assessments.length > 0;
 
   const tabs = [
     { name: "📋 Extraction", href: "/extraction", id: "extraction", badge: false },

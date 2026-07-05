@@ -1,41 +1,36 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { Assessment } from "@/types/assessment";
 import { STORAGE_KEYS } from "@/utils/storageKeys";
+import { getLocalStorageStore, useLocalStorageValue } from "@/hooks/useLocalStorageValue";
 
 type AssessmentDraft = Omit<Assessment, "label"> & { label: string };
+
+function parseAssessments(raw: string | null): Assessment[] {
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw) as Assessment[];
+  } catch {
+    return [];
+  }
+}
 
 /**
  * Manages clinical assessments with localStorage persistence and cross-component sync.
  * Label defaults to "Suivi N" (computed from current count) when left empty.
  */
 export function useAssessments() {
-  const [assessments, setAssessmentsState] = useState<Assessment[]>([]);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEYS.analyticsAssessments);
-      if (stored) setAssessmentsState(JSON.parse(stored) as Assessment[]);
-    } catch {}
-  }, []);
-
-  const sync = useCallback((next: Assessment[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.analyticsAssessments, JSON.stringify(next));
-      window.dispatchEvent(new CustomEvent("scaleneo:analytics:update"));
-    } catch {}
-  }, []);
+  const [raw, setRaw] = useLocalStorageValue(STORAGE_KEYS.analyticsAssessments);
+  const assessments = useMemo(() => parseAssessments(raw), [raw]);
 
   const setAssessments = useCallback(
-    (updater: Assessment[] | ((prev: Assessment[]) => Assessment[])) => {
-      setAssessmentsState((prev) => {
-        const next = typeof updater === "function" ? updater(prev) : updater;
-        sync(next);
-        return next;
-      });
+    (updater: (prev: Assessment[]) => Assessment[]) => {
+      const store = getLocalStorageStore(STORAGE_KEYS.analyticsAssessments);
+      const next = updater(parseAssessments(store.getSnapshot()));
+      setRaw(next.length > 0 ? JSON.stringify(next) : null);
     },
-    [sync]
+    [setRaw]
   );
 
   const addAssessment = useCallback(
@@ -59,7 +54,7 @@ export function useAssessments() {
   );
 
   const clearAssessments = useCallback(
-    () => setAssessments([]),
+    () => setAssessments(() => []),
     [setAssessments]
   );
 
