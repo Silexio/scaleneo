@@ -11,7 +11,7 @@ import { useAssessments } from "@/hooks/useAssessments";
  * DashboardNavigation Component
  *
  * Main navigation tabs for the SCALENEO dashboard.
- * Displays 4 tabs: Extraction, Results, Analytics, Export.
+ * Displays 5 tabs: Extraction, Results, Analytics, Export, Connexion IA.
  * Shows a green dot on Results and Export when a patient is loaded.
  */
 export function DashboardNavigation() {
@@ -26,11 +26,12 @@ export function DashboardNavigation() {
     { name: "📊 Résultats", href: "/results", id: "results", badge: hasPatient },
     { name: "📈 Analytics", href: "/analytics", id: "analytics", badge: hasAnalytics },
     { name: "💾 Export", href: "/export", id: "export", badge: hasPatient },
+    { name: "🔌 Connexion IA", href: "/connect", id: "connect", badge: false },
   ];
 
   return (
     <div className="flex justify-center w-full">
-      <div className="grid w-full max-w-2xl grid-cols-2 sm:grid-cols-4 h-auto p-1 bg-muted border shadow-sm rounded-lg">
+      <div className="grid w-full max-w-4xl grid-cols-2 sm:grid-cols-5 h-auto p-1 bg-muted border shadow-sm rounded-lg">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;
           return (

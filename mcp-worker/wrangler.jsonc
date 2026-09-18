@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "scaleneo-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "alias": {
+    "@/types/patient": "../types/patient.ts"
+  },
+  "rules": [
+    { "type": "Text", "globs": ["**/*.txt"], "fallthrough": true }
+  ]
+}
