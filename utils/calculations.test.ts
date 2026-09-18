@@ -58,6 +58,29 @@ describe("detectRedFlags", () => {
     expect(flags.systemic_disease?.category).toBe("MODERATE");
   });
 
+  it("ne lève aucun drapeau quand le praticien documente leur absence", () => {
+    const patient = patientWith("section16", {
+      observationsGlobales: "Pas de fièvre, pas de perte poids. Aucun traumatisme rapporté. Fracture écartée.",
+    });
+
+    expect(detectRedFlags(patient)).toEqual({});
+  });
+
+  it("n'attribue pas au patient l'antécédent d'un proche", () => {
+    const patient = patientWith("section16", { observationsGlobales: "Mère décédée d'un cancer du sein" });
+
+    expect(detectRedFlags(patient).malignancy).toBeUndefined();
+  });
+
+  it("lève le drapeau malgré une absence documentée dans la même phrase", () => {
+    const patient = patientWith("section16", {
+      observationsGlobales: "Pas de fièvre mais traumatisme récent",
+    });
+
+    expect(detectRedFlags(patient).trauma_fracture?.detected).toBe(true);
+    expect(detectRedFlags(patient).infection_fever).toBeUndefined();
+  });
+
   it("cherche dans toutes les sections, pas uniquement la section drapeaux rouges", () => {
     const patient = patientWith("section16", { observationsGlobales: "Fièvre vespérale" });
 

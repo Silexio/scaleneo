@@ -1,5 +1,6 @@
 import { PatientData } from "@/types/patient";
 import { SCORE_DEFINITIONS, RED_FLAGS, RedFlagDefinition } from "./definitions";
+import { countAffirmedTerms } from "./redFlagMatching";
 
 const parseScore = (val: string | number | undefined | null): number | null => {
   if (val === undefined || val === null) return null;
@@ -52,26 +53,23 @@ export interface DetectedRedFlag extends RedFlagDefinition {
 export type DetectedRedFlags = Record<string, DetectedRedFlag>;
 
 /**
- * Detects clinical red flags by searching warning terms in filled patient values.
+ * Detects clinical red flags asserted in the filled patient values.
  *
- * Field names are excluded from the search: they are structural, not clinical,
- * and matching them produced false positives on every assessment.
+ * Field names are excluded from the search, and each term is read in its clause so
+ * that a negated or family-attributed mention never raises a flag.
  *
  * @param data - Complete patient data object
  * @returns Object mapping flag keys to detected red flags with match counts
  */
 export const detectRedFlags = (data: PatientData): DetectedRedFlags => {
   const detected: DetectedRedFlags = {};
-  const clinicalText = Object.values(data)
+  const clinicalValues = Object.values(data)
     .flatMap((section) => Object.values(section as Record<string, unknown>))
     .filter((value) => value !== null && value !== undefined && value !== "")
-    .join(" ")
-    .toLowerCase();
+    .map(String);
 
   for (const [flagKey, flagDef] of Object.entries(RED_FLAGS)) {
-    const matchCount = flagDef.searchTerms.filter((term) =>
-      clinicalText.includes(term.toLowerCase()),
-    ).length;
+    const matchCount = countAffirmedTerms(clinicalValues, flagDef.searchTerms);
 
     if (matchCount > 0) {
       detected[flagKey] = { ...flagDef, matchCount, detected: true };
