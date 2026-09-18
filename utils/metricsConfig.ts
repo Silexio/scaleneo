@@ -6,7 +6,7 @@
  * - mcid: Minimum Clinically Important Difference
  * - direction: Whether improvement is "up" or "down"
  * - min/max: Valid range for the metric
- * - color: Chart color (to be replaced with CSS variables)
+ * - color: Chart stroke, read from the global metric tokens in globals.css
  */
 
 export interface MetricConfig {
@@ -36,7 +36,7 @@ export const METRICS_CONFIG: Record<MetricKey, MetricConfig> = {
         direction: "down",
         min: 0,
         max: 10,
-        color: "#e74c3c",
+        color: "var(--metric-pain)",
     },
     odi: {
         label: "Incapacité (ODI)",
@@ -44,7 +44,7 @@ export const METRICS_CONFIG: Record<MetricKey, MetricConfig> = {
         direction: "down",
         min: 0,
         max: 100,
-        color: "#3498db",
+        color: "var(--metric-disability)",
     },
     csi: {
         label: "Sensibilisation (CSI)",
@@ -52,7 +52,7 @@ export const METRICS_CONFIG: Record<MetricKey, MetricConfig> = {
         direction: "down",
         min: 0,
         max: 100,
-        color: "#f39c12",
+        color: "var(--metric-sensitization)",
     },
     pcs: {
         label: "Catastrophisme (PCS)",
@@ -60,7 +60,7 @@ export const METRICS_CONFIG: Record<MetricKey, MetricConfig> = {
         direction: "down",
         min: 0,
         max: 52,
-        color: "#9b59b6",
+        color: "var(--metric-catastrophizing)",
     },
     fabqTravail: {
         label: "Évitement (FABQ-W)",
@@ -68,7 +68,7 @@ export const METRICS_CONFIG: Record<MetricKey, MetricConfig> = {
         direction: "down",
         min: 0,
         max: 100,
-        color: "#e67e22",
+        color: "var(--metric-avoidance-work)",
     },
     hadsAnxiete: {
         label: "Anxiété (HADS-A)",
@@ -76,7 +76,7 @@ export const METRICS_CONFIG: Record<MetricKey, MetricConfig> = {
         direction: "down",
         min: 0,
         max: 21,
-        color: "#1abc9c",
+        color: "var(--metric-anxiety)",
     },
     hadsDepression: {
         label: "Dépression (HADS-D)",
@@ -84,7 +84,7 @@ export const METRICS_CONFIG: Record<MetricKey, MetricConfig> = {
         direction: "down",
         min: 0,
         max: 21,
-        color: "#16a085",
+        color: "var(--metric-depression)",
     },
     fabqActivite: {
         label: "Évitement (FABQ-A)",
@@ -92,7 +92,7 @@ export const METRICS_CONFIG: Record<MetricKey, MetricConfig> = {
         direction: "down",
         min: 0,
         max: 100,
-        color: "#d35400",
+        color: "var(--metric-avoidance-activity)",
     },
     wai: {
         label: "Alliance (WAI)",
@@ -100,6 +100,6 @@ export const METRICS_CONFIG: Record<MetricKey, MetricConfig> = {
         direction: "up",
         min: 0,
         max: 100,
-        color: "#27ae60",
+        color: "var(--metric-alliance)",
     },
 };

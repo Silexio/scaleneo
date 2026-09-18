@@ -9,6 +9,18 @@ interface ScoreSummaryProps {
   data: PatientData;
 }
 
+const LEVEL_BORDERS: Record<string, string> = {
+  red: "border-l-[var(--text-error)]",
+  yellow: "border-l-[var(--text-warning)]",
+  green: "border-l-[var(--text-success)]",
+};
+
+const LEVEL_TEXTS: Record<string, string> = {
+  red: "text-[var(--text-error)]",
+  yellow: "text-[var(--text-warning)]",
+  green: "text-[var(--text-success)]",
+};
+
 interface ComputedScore {
   key: string;
   label: string;
@@ -77,12 +89,8 @@ export function ScoreSummary({ data }: ScoreSummaryProps) {
             <div
               key={score.key}
               className={cn(
-                "group bg-card p-3 rounded border-l-4 transition-all duration-200 shadow-sm border border-border hover:shadow-md hover:border-l-4",
-                score.interp?.color === "red"
-                  ? "border-l-destructive"
-                  : score.interp?.color === "yellow"
-                    ? "border-l-yellow-500"
-                    : "border-l-green-500",
+                "group bg-card p-3 rounded-sm border-l-4 transition-all duration-200 shadow-sm border border-border hover:shadow-md hover:border-l-4",
+                LEVEL_BORDERS[score.interp?.color ?? "green"],
               )}
             >
               <StableBold
@@ -99,11 +107,7 @@ export function ScoreSummary({ data }: ScoreSummaryProps) {
                 text={score.interp?.label || ""}
                 className={cn(
                   "text-[10px] italic font-medium leading-tight",
-                  score.interp?.color === "red"
-                    ? "text-destructive"
-                    : score.interp?.color === "yellow"
-                      ? "text-yellow-600"
-                      : "text-green-600",
+                  LEVEL_TEXTS[score.interp?.color ?? "green"],
                 )}
                 hoverClassName="group-hover:font-extrabold"
               />

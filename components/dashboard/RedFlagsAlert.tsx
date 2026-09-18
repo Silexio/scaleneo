@@ -8,6 +8,12 @@ interface RedFlagsAlertProps {
   data: PatientData;
 }
 
+const SEVERITY_STYLES = {
+  CRITICAL: "border-[var(--border-error)] bg-[var(--bg-error)] text-[var(--text-error)]",
+  HIGH: "border-[var(--border-warning)] bg-[var(--bg-warning)] text-[var(--text-warning)]",
+  MODERATE: "border-[var(--border-caution)] bg-[var(--bg-caution)] text-[var(--text-caution)]",
+} as const;
+
 /**
  * RedFlagsAlert Component
  *
@@ -26,14 +32,14 @@ export function RedFlagsAlert({ data }: RedFlagsAlertProps) {
 
   if (flagCount === 0) {
     return (
-      <Card className="mb-5 border-green-500 bg-green-50/50">
+      <Card className="mb-5 border-[var(--border-success)] bg-[var(--bg-success)]">
         <CardContent className="pt-6 flex items-center gap-3">
-          <CheckCircle className="w-6 h-6 text-green-600" />
+          <CheckCircle className="w-6 h-6 text-[var(--text-success)]" />
           <div>
-            <h3 className="text-green-800 font-bold text-base">
+            <h3 className="text-[var(--text-success)] font-bold text-base">
               Pas de drapeau rouge détecté
             </h3>
-            <p className="text-green-700 text-xs mt-1">
+            <p className="text-[var(--text-success)] text-xs mt-1">
               Aucun critère d&apos;alerte identifié dans ce bilan.
             </p>
           </div>
@@ -59,12 +65,8 @@ export function RedFlagsAlert({ data }: RedFlagsAlertProps) {
             <div
               key={key}
               className={cn(
-                "p-3 rounded border-l-4",
-                flag.category === "CRITICAL"
-                  ? "border-destructive bg-destructive/20 text-destructive-background"
-                  : flag.category === "HIGH"
-                    ? "border-orange-500 bg-orange-50 text-orange-900"
-                    : "border-yellow-500 bg-yellow-50 text-yellow-900",
+                "p-3 rounded-sm border-l-4",
+                SEVERITY_STYLES[flag.category] ?? SEVERITY_STYLES.MODERATE,
               )}
             >
               <div className="font-semibold text-xs">{flag.label}</div>

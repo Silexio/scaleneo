@@ -27,11 +27,11 @@ export default function ExtractionPage() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {patientData && !isRedirecting && (
-        <div className="col-span-1 md:col-span-2 flex items-center gap-3 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg text-sm">
+        <div className="col-span-1 md:col-span-2 flex items-center gap-3 p-3 bg-[var(--bg-warning)] border border-[var(--border-warning)] text-[var(--text-warning)] rounded-lg text-sm">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>Un patient est déjà chargé. Charger un nouveau fichier remplacera les données actuelles.</span>
           <Link href="/results" className="ml-auto shrink-0">
-            <Button variant="outline" size="sm" className="border-yellow-300 text-yellow-800 hover:bg-yellow-100 h-7 text-xs gap-1">
+            <Button variant="outline" size="sm" className="border-[var(--border-warning)] text-[var(--text-warning)] h-7 text-xs gap-1">
               Voir les résultats <ArrowRight className="w-3 h-3" />
             </Button>
           </Link>

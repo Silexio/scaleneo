@@ -89,37 +89,38 @@ export function MetricChart({
                         <CartesianGrid
                             strokeDasharray="3 3"
                             vertical={false}
-                            stroke="#f0f0f0"
+                            stroke="var(--border)"
                         />
                         <XAxis
                             dataKey="name"
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fontSize: 10, fill: "#666" }}
+                            tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
                         />
                         <YAxis
                             domain={[config.min, config.max]}
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fontSize: 10, fill: "#666" }}
+                            tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
                         />
                         <Tooltip
                             contentStyle={{
-                                borderRadius: "8px",
-                                border: "1px solid #e2e8f0",
-                                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                                borderRadius: "var(--radius)",
+                                border: "1px solid var(--border)",
+                                backgroundColor: "var(--popover)",
+                                color: "var(--popover-foreground)",
                             }}
                             labelStyle={{ fontWeight: "bold", fontSize: "12px" }}
                         />
                         <Legend iconType="circle" wrapperStyle={{ fontSize: "10px" }} />
                         <ReferenceLine
                             y={baselineValue}
-                            stroke="#94a3b8"
+                            stroke="var(--muted-foreground)"
                             strokeDasharray="3 3"
                         />
                         <ReferenceLine
                             y={mcidTarget}
-                            stroke="#10b981"
+                            stroke="var(--text-success)"
                             strokeDasharray="5 5"
                         />
                         <Line
@@ -132,7 +133,7 @@ export function MetricChart({
                                 r: 4,
                                 fill: config.color,
                                 strokeWidth: 2,
-                                stroke: "#fff",
+                                stroke: "var(--card)",
                             }}
                             activeDot={{ r: 6, strokeWidth: 0 }}
                             isAnimationActive={false}
