@@ -17,7 +17,7 @@ const MAX_CONTENT_LENGTH = 512_000;
 const MAX_ASSESSMENTS = 12;
 
 const BETA_NOTICE =
-  "SCALENEO beta — traitement sans conservation. Ne pas soumettre de données patient non anonymisées.";
+  "SCALENEO beta — traitement sans conservation.";
 
 const content = z
   .string()
