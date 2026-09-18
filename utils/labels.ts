@@ -276,3 +276,25 @@ export const SECTION_LABELS: Record<string, string> = {
   hypothese: "17: HYPOTHÈSE DE TRAVAIL",
   qualite: "18: CONTRÔLE QUALITÉ",
 };
+
+/** Short section names used as spreadsheet tab titles, capped at Excel's 31-character limit. */
+export const SECTION_SHEET_NAMES: Record<string, string> = {
+  section1: "ADMIN",
+  section2: "ANTHROPO",
+  section3: "PATHOLOGIE",
+  section4: "SYMPTOMES",
+  section5: "MECANISMES",
+  section6: "TESTS",
+  section7: "SCORES",
+  section8: "REDFLAGS",
+  section9: "MOTIFS",
+  section10: "GESTION",
+  section11: "CROYANCES",
+  section12: "PRONOSTIC",
+  section13: "ACTIVITES",
+  section14: "FACTEURS",
+  section15: "SATISFACTION",
+  section16: "OBSERVATIONS",
+  section17: "HYPOTHESE",
+  section18: "QUALITE",
+};

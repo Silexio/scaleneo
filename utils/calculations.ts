@@ -1,11 +1,6 @@
 import { PatientData } from "@/types/patient";
 import { SCORE_DEFINITIONS, RED_FLAGS, RedFlagDefinition } from "./definitions";
 
-/**
- * Parses a score value that can be string or number
- * @param val - Score value to parse
- * @returns Parsed numeric score or 0 if invalid
- */
 const parseScore = (val: string | number | undefined | null): number | null => {
   if (val === undefined || val === null) return null;
   if (typeof val === "number") return val;
@@ -13,37 +8,9 @@ const parseScore = (val: string | number | undefined | null): number | null => {
   return isNaN(parsed) ? null : parsed;
 };
 
-/**
- * Checks if a string contains a search term (case-insensitive)
- * @param val - String to search in
- * @param search - Search term
- * @returns true if search term is found
- */
 const hasText = (val: string | undefined | null, search: string): boolean => {
   if (!val) return false;
   return val.toLowerCase().includes(search.toLowerCase());
-};
-
-/**
- * Computes BMI (Body Mass Index) from weight and height
- * 
- * Handles both metric formats:
- * - Height > 3 assumed to be in cm (e.g., 175) - converted to meters
- * - Height <= 3 assumed to be in meters (e.g., 1.75)
- * 
- * @param poids - Weight in kg
- * @param taille - Height in cm or meters
- * @returns BMI as string with 1 decimal or null if invalid
- */
-export const computeIMC = (poids: string | undefined, taille: string | undefined): string | null => {
-  if (!poids || !taille) return null;
-  const p = parseFloat(poids);
-  let t = parseFloat(taille);
-  if (t > 3) t = t / 100;
-
-  if (isNaN(p) || isNaN(t) || t === 0) return null;
-  const imc = p / (t * t);
-  return imc.toFixed(1);
 };
 
 /**
@@ -85,11 +52,11 @@ export interface DetectedRedFlag extends RedFlagDefinition {
 export type DetectedRedFlags = Record<string, DetectedRedFlag>;
 
 /**
- * Detects clinical red flags in patient data
- * 
- * Uses brute-force text search across entire patient data object.
- * Searches for predefined medical warning terms (fracture, infection, neurological signs, etc.)
- * 
+ * Detects clinical red flags by searching warning terms in filled patient values.
+ *
+ * Field names are excluded from the search: they are structural, not clinical,
+ * and matching them produced false positives on every assessment.
+ *
  * @param data - Complete patient data object
  * @returns Object mapping flag keys to detected red flags with match counts
  */

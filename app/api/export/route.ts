@@ -1,27 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { unflattenDotObject } from "@/utils/objectHelpers";
-
-const SECTION_LABELS: Record<string, string> = {
-    section1: "ADMIN",
-    section2: "ANTHROPO",
-    section3: "PATHOLOGIE",
-    section4: "SYMPTOMES",
-    section5: "MECANISMES",
-    section6: "TESTS",
-    section7: "SCORES",
-    section8: "REDFLAGS",
-    section9: "MOTIFS",
-    section10: "GESTION",
-    section11: "CROYANCES",
-    section12: "PRONOSTIC",
-    section13: "ACTIVITES",
-    section14: "FACTEURS",
-    section15: "SATISFACTION",
-    section16: "OBSERVATIONS",
-    section17: "HYPOTHESE",
-    section18: "QUALITE"
-};
+import { SECTION_SHEET_NAMES } from "@/utils/labels";
 
 function createSheet(
     wb: XLSX.WorkBook,
@@ -151,7 +131,7 @@ function categorizeData(data: Record<string, unknown>): Record<string, Record<st
     for (const [key, value] of Object.entries(data)) {
         const parts = key.split('.');
         const prefix = parts.length > 1 ? parts[0] : null;
-        const categoryName = prefix ? (SECTION_LABELS[prefix] ?? prefix.toUpperCase()) : "GENERAL";
+        const categoryName = prefix ? (SECTION_SHEET_NAMES[prefix] ?? prefix.toUpperCase()) : "GENERAL";
         const fieldName = prefix ? parts.slice(1).join(' ') : key;
 
         if (!categories[categoryName]) {
