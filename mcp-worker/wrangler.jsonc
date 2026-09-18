@@ -5,6 +5,12 @@
   "compatibility_date": "2026-09-18",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
+  "routes": [
+    {
+      "pattern": "scaleneo.silexio.be/mcp*",
+      "zone_name": "silexio.be"
+    }
+  ],
   "alias": {
     "@/types/patient": "../types/patient.ts"
   },
