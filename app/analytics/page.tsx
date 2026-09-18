@@ -189,8 +189,8 @@ export default function AnalyticsPage() {
                               <td
                                 className={`px-6 py-4 font-semibold ${
                                   isImprovement
-                                    ? "text-[hsl(var(--text-success))]"
-                                    : "text-[hsl(var(--text-error))]"
+                                    ? "text-[var(--text-success)]"
+                                    : "text-[var(--text-error)]"
                                 }`}
                               >
                                 {diff > 0 ? "+" : ""}

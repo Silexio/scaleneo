@@ -1,14 +1,16 @@
 import React from "react";
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from "@/lib/utils";
 
 interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: "green" | "yellow" | "red" | "neutral";
 }
+
+const VARIANTS = {
+  green: "bg-[var(--bg-success)] text-[var(--text-success)]",
+  yellow: "bg-[var(--bg-warning)] text-[var(--text-warning)]",
+  red: "bg-[var(--bg-error)] text-[var(--text-error)]",
+  neutral: "bg-muted text-muted-foreground",
+} as const;
 
 export function Badge({
   variant = "neutral",
@@ -16,18 +18,11 @@ export function Badge({
   children,
   ...props
 }: BadgeProps) {
-  const variants = {
-    green: "bg-emerald-100 text-emerald-800",
-    yellow: "bg-amber-100 text-amber-800",
-    red: "bg-red-100 text-red-800",
-    neutral: "bg-gray-100 text-gray-800",
-  };
-
   return (
     <span
       className={cn(
-        "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-        variants[variant],
+        "inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase",
+        VARIANTS[variant],
         className,
       )}
       {...props}

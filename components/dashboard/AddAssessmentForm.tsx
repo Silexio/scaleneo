@@ -21,11 +21,11 @@ interface Status {
 
 const STATUS_STYLES: Record<StatusType, string> = {
   success:
-    "bg-[hsl(var(--bg-success))] border-[hsl(var(--border-success))] text-[hsl(var(--text-success))]",
+    "bg-[var(--bg-success)] border-[var(--border-success)] text-[var(--text-success)]",
   warning:
-    "bg-[hsl(var(--bg-warning))] border-[hsl(var(--border-warning))] text-[hsl(var(--text-warning))]",
+    "bg-[var(--bg-warning)] border-[var(--border-warning)] text-[var(--text-warning)]",
   error:
-    "bg-[hsl(var(--bg-error))] border-[hsl(var(--border-error))] text-[hsl(var(--text-error))]",
+    "bg-[var(--bg-error)] border-[var(--border-error)] text-[var(--text-error)]",
 };
 
 const StatusIcon = ({ type }: { type: StatusType }) =>

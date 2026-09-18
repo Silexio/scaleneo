@@ -65,7 +65,7 @@ export function AssessmentTimeline({ assessments, onRemove }: AssessmentTimeline
                 {confirmingId === assessment.id ? (
                   <div className="flex flex-col items-end gap-1 shrink-0 ml-2">
                     {isDeletingBaseline && (
-                      <span className="text-[10px] text-[hsl(var(--text-warning))] max-w-28 text-right leading-tight">
+                      <span className="text-[10px] text-[var(--text-warning)] max-w-28 text-right leading-tight">
                         Référence baseline — les comparaisons seront réinitialisées.
                       </span>
                     )}

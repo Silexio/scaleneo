@@ -32,9 +32,9 @@ export function MetricCard({ config, baselineValue, latestValue }: MetricCardPro
                 style={{
                     backgroundColor: isSignificant
                         ? isImprovement
-                            ? "hsl(var(--bg-success))"
-                            : "hsl(var(--bg-error))"
-                        : "hsl(var(--muted))",
+                            ? "var(--bg-success)"
+                            : "var(--bg-error)"
+                        : "var(--muted)",
                 }}
             />
             <CardContent className="pt-4 px-4 pb-4">
@@ -46,8 +46,8 @@ export function MetricCard({ config, baselineValue, latestValue }: MetricCardPro
                         <Badge
                             className={
                                 isImprovement
-                                    ? "bg-[hsl(var(--bg-success))] text-[hsl(var(--text-success))] hover:bg-[hsl(var(--bg-success))] border-none px-1.5 py-0 text-[9px]"
-                                    : "bg-[hsl(var(--bg-error))] text-[hsl(var(--text-error))] hover:bg-[hsl(var(--bg-error))] border-none px-1.5 py-0 text-[9px]"
+                                    ? "bg-[var(--bg-success)] text-[var(--text-success)] hover:bg-[var(--bg-success)] border-none px-1.5 py-0 text-[9px]"
+                                    : "bg-[var(--bg-error)] text-[var(--text-error)] hover:bg-[var(--bg-error)] border-none px-1.5 py-0 text-[9px]"
                             }
                         >
                             MCID √
@@ -57,7 +57,7 @@ export function MetricCard({ config, baselineValue, latestValue }: MetricCardPro
                 <div className="flex items-baseline gap-2">
                     <div className="text-2xl font-bold">{latestValue.toFixed(1)}</div>
                     <div
-                        className={`flex items-center text-xs font-semibold ${isImprovement ? "text-[hsl(var(--text-success))]" : "text-[hsl(var(--text-error))]"
+                        className={`flex items-center text-xs font-semibold ${isImprovement ? "text-[var(--text-success)]" : "text-[var(--text-error)]"
                             }`}
                     >
                         {isImprovement ? (

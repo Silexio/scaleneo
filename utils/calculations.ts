@@ -95,13 +95,17 @@ export type DetectedRedFlags = Record<string, DetectedRedFlag>;
  */
 export const detectRedFlags = (data: PatientData): DetectedRedFlags => {
   const detected: DetectedRedFlags = {};
-  const allDataStr = JSON.stringify(data).toLowerCase();
+  const clinicalText = Object.values(data)
+    .flatMap((section) => Object.values(section as Record<string, unknown>))
+    .filter((value) => value !== null && value !== undefined && value !== "")
+    .join(" ")
+    .toLowerCase();
 
   for (const [flagKey, flagDef] of Object.entries(RED_FLAGS)) {
-    let matchCount = 0;
-    for (const term of flagDef.searchTerms) {
-      if (allDataStr.includes(term.toLowerCase())) matchCount++;
-    }
+    const matchCount = flagDef.searchTerms.filter((term) =>
+      clinicalText.includes(term.toLowerCase()),
+    ).length;
+
     if (matchCount > 0) {
       detected[flagKey] = { ...flagDef, matchCount, detected: true };
     }
