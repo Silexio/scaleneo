@@ -1,14 +1,14 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "scaleneo",
+  "name": "scaleneo-mcp",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-18",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
   "routes": [
     {
-      "pattern": "scaleneo.silexio.be/mcp*",
-      "zone_name": "silexio.be"
+      "pattern": "scaleneo-mcp.silexio.be",
+      "custom_domain": true
     }
   ],
   "alias": {
