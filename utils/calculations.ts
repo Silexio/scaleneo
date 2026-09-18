@@ -4,7 +4,7 @@ import { SCORE_DEFINITIONS, RED_FLAGS, RedFlagDefinition } from "./definitions";
 const parseScore = (val: string | number | undefined | null): number | null => {
   if (val === undefined || val === null) return null;
   if (typeof val === "number") return val;
-  const parsed = parseInt(val);
+  const parsed = parseFloat(val);
   return isNaN(parsed) ? null : parsed;
 };
 
