@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { countAffirmedTerms } from "./redFlagMatching";
+import { countAffirmedTerms, toClinicalSegments } from "./redFlagMatching";
 
-const count = (text: string, ...terms: string[]) => countAffirmedTerms([text], terms);
+const count = (text: string, ...terms: string[]) =>
+  countAffirmedTerms(toClinicalSegments([text]), terms);
 
 describe("countAffirmedTerms", () => {
   it("compte un terme affirmé", () => {
@@ -74,6 +75,6 @@ describe("countAffirmedTerms", () => {
   });
 
   it("lit chaque champ indépendamment des autres", () => {
-    expect(countAffirmedTerms(["Pas de fièvre", "Fièvre à 38.5"], ["fièvre"])).toBe(1);
+    expect(countAffirmedTerms(toClinicalSegments(["Pas de fièvre", "Fièvre à 38.5"]), ["fièvre"])).toBe(1);
   });
 });

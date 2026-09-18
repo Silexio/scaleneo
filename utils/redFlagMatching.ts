@@ -22,50 +22,64 @@ const normalize = (text: string): string =>
 
 const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-const wordIndex = (segment: string, marker: string): number => {
-  const match = new RegExp(`(?:^|[^${WORD_CHAR}])${escapeRegExp(marker)}(?:[^${WORD_CHAR}]|$)`).exec(segment);
-  return match ? match.index : -1;
+const wordPattern = (marker: string): RegExp =>
+  new RegExp(`(?:^|[^${WORD_CHAR}])${escapeRegExp(marker)}(?:[^${WORD_CHAR}]|$)`);
+
+const NEGATION_BEFORE_PATTERNS = NEGATION_BEFORE.map(wordPattern);
+const NEGATION_AFTER_PATTERNS = NEGATION_AFTER.map(wordPattern);
+const FAMILY_PATTERNS = FAMILY_MARKERS.map(wordPattern);
+
+const termPatterns = new Map<string, RegExp>();
+
+const patternFor = (term: string): RegExp => {
+  const cached = termPatterns.get(term);
+  if (cached) return cached;
+
+  const pattern = new RegExp(`(?:^|[^${WORD_CHAR}])${escapeRegExp(normalize(term))}`);
+  termPatterns.set(term, pattern);
+  return pattern;
 };
 
-const termIndex = (segment: string, term: string): number => {
-  const match = new RegExp(`(?:^|[^${WORD_CHAR}])${escapeRegExp(term)}`).exec(segment);
+const positionOf = (segment: string, pattern: RegExp): number => {
+  const match = pattern.exec(segment);
   return match ? match.index : -1;
 };
 
 const isAffirmedIn = (segment: string, term: string): boolean => {
-  const position = termIndex(segment, term);
+  const position = positionOf(segment, patternFor(term));
   if (position === -1) return false;
 
-  const isNegated =
-    NEGATION_BEFORE.some((marker) => {
-      const markerPosition = wordIndex(segment, marker);
-      return markerPosition !== -1 && markerPosition < position;
-    }) ||
-    NEGATION_AFTER.some((marker) => {
-      const markerPosition = wordIndex(segment, marker);
-      return markerPosition !== -1 && markerPosition > position;
-    });
+  const isNegatedBefore = NEGATION_BEFORE_PATTERNS.some((pattern) => {
+    const markerPosition = positionOf(segment, pattern);
+    return markerPosition !== -1 && markerPosition < position;
+  });
 
-  const isRelatedToRelative = FAMILY_MARKERS.some((marker) => wordIndex(segment, marker) !== -1);
-
-  return !isNegated && !isRelatedToRelative;
+  return !isNegatedBefore && !NEGATION_AFTER_PATTERNS.some((pattern) => positionOf(segment, pattern) > position);
 };
+
+/**
+ * Splits filled patient values into the clauses a warning term can be read in.
+ *
+ * Clauses describing a relative are dropped here rather than per term, since a family
+ * history never applies to the patient whatever the term.
+ *
+ * @param values - Filled patient values, one entry per clinical field
+ * @returns Normalized clauses to search
+ */
+export const toClinicalSegments = (values: string[]): string[] =>
+  values
+    .flatMap((value) => normalize(value).split(SEGMENT_BOUNDARY))
+    .filter((segment) => segment !== "" && !FAMILY_PATTERNS.some((pattern) => pattern.test(segment)));
 
 /**
  * Counts how many search terms are actually asserted about the patient.
  *
- * A term is ignored when its clause negates it ("pas de fièvre", "fracture écartée")
- * or attributes it to a relative ("mère opérée d'un cancer"), so that documenting the
- * absence of a warning sign never raises one.
+ * A term is ignored when its clause negates it ("pas de fièvre", "fracture écartée"),
+ * so that documenting the absence of a warning sign never raises one.
  *
- * @param values - Filled patient values, one entry per clinical field
+ * @param segments - Clauses produced by toClinicalSegments
  * @param searchTerms - Warning terms of a single red flag
  * @returns Number of distinct terms asserted about the patient
  */
-export const countAffirmedTerms = (values: string[], searchTerms: string[]): number => {
-  const segments = values.flatMap((value) => normalize(value).split(SEGMENT_BOUNDARY));
-
-  return searchTerms.filter((term) =>
-    segments.some((segment) => isAffirmedIn(segment, normalize(term))),
-  ).length;
-};
+export const countAffirmedTerms = (segments: string[], searchTerms: string[]): number =>
+  searchTerms.filter((term) => segments.some((segment) => isAffirmedIn(segment, term))).length;

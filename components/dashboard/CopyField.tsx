@@ -1,25 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface CopyFieldProps {
   value: string;
   label: string;
-  multiline?: boolean;
 }
 
 /** Read-only value with a one-click copy action and transient confirmation. */
-export function CopyField({ value, label, multiline = false }: CopyFieldProps) {
+export function CopyField({ value, label }: CopyFieldProps) {
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch {
       setCopied(false);
     }
@@ -41,12 +44,7 @@ export function CopyField({ value, label, multiline = false }: CopyFieldProps) {
           <span className="ml-2">{copied ? "Copié" : "Copier"}</span>
         </Button>
       </div>
-      <pre
-        className={cn(
-          "overflow-x-auto rounded-md border bg-muted px-3 py-2 font-mono text-xs text-foreground",
-          multiline ? "whitespace-pre" : "whitespace-nowrap",
-        )}
-      >
+      <pre className="overflow-x-auto rounded-md border bg-muted px-3 py-2 font-mono text-xs text-foreground">
         {value}
       </pre>
     </div>

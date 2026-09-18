@@ -99,7 +99,7 @@ export default function ConnectPage() {
                 Si votre client n&apos;accepte que des serveurs locaux, ce fichier de configuration
                 fait le relais. Il nécessite Node.js sur le poste.
               </p>
-              <CopyField label="Configuration JSON" value={desktopConfig(MCP_URL)} multiline />
+              <CopyField label="Configuration JSON" value={desktopConfig(MCP_URL)} />
             </section>
           </CardContent>
         </Card>

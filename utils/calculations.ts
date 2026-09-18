@@ -1,6 +1,6 @@
 import { PatientData } from "@/types/patient";
 import { SCORE_DEFINITIONS, RED_FLAGS, RedFlagDefinition } from "./definitions";
-import { countAffirmedTerms } from "./redFlagMatching";
+import { countAffirmedTerms, toClinicalSegments } from "./redFlagMatching";
 
 const parseScore = (val: string | number | undefined | null): number | null => {
   if (val === undefined || val === null) return null;
@@ -63,13 +63,15 @@ export type DetectedRedFlags = Record<string, DetectedRedFlag>;
  */
 export const detectRedFlags = (data: PatientData): DetectedRedFlags => {
   const detected: DetectedRedFlags = {};
-  const clinicalValues = Object.values(data)
-    .flatMap((section) => Object.values(section as Record<string, unknown>))
-    .filter((value) => value !== null && value !== undefined && value !== "")
-    .map(String);
+  const segments = toClinicalSegments(
+    Object.values(data)
+      .flatMap((section) => Object.values(section as Record<string, unknown>))
+      .filter((value) => value !== null && value !== undefined && value !== "")
+      .map(String),
+  );
 
   for (const [flagKey, flagDef] of Object.entries(RED_FLAGS)) {
-    const matchCount = countAffirmedTerms(clinicalValues, flagDef.searchTerms);
+    const matchCount = countAffirmedTerms(segments, flagDef.searchTerms);
 
     if (matchCount > 0) {
       detected[flagKey] = { ...flagDef, matchCount, detected: true };
@@ -94,11 +96,10 @@ export const detectRedFlags = (data: PatientData): DetectedRedFlags => {
  * 10. Management approach and prognosis
  * 
  * @param data - Complete patient data object
+ * @param redFlags - Already detected flags, to avoid scanning the record twice
  * @returns Hypothesis object with analysis for each domain
  */
-export const generateHypothesis = (data: PatientData) => {
-  const redFlags = detectRedFlags(data);
-
+export const generateHypothesis = (data: PatientData, redFlags = detectRedFlags(data)) => {
   return {
     pathology: analyzePathology(data),
     sourcesOfSymptoms: analyzeSourcesOfSymptoms(data),

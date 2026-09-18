@@ -1,10 +1,14 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "types": ["@cloudflare/workers-types"],
+    "types": [
+      "@cloudflare/workers-types"
+    ],
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
@@ -12,8 +16,17 @@
     "isolatedModules": true,
     "resolveJsonModule": true,
     "paths": {
-      "@/types/patient": ["../types/patient.ts"]
+      "@/types/patient": [
+        "../types/patient.ts"
+      ]
     }
   },
-  "include": ["src/**/*.ts", "../utils/**/*.ts", "../types/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "../utils/**/*.ts",
+    "../types/**/*.ts"
+  ],
+  "exclude": [
+    "../utils/**/*.test.ts"
+  ]
 }

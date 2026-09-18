@@ -1,5 +1,5 @@
 import type { PatientData } from "../../types/patient";
-import type { DetectedRedFlags, generateHypothesis } from "../../utils/calculations";
+import type { DetectedRedFlag, DetectedRedFlags, generateHypothesis } from "../../utils/calculations";
 import { interpretScore } from "../../utils/calculations";
 import { SCORE_DEFINITIONS } from "../../utils/definitions";
 import { FIELD_LABELS, SECTION_LABELS } from "../../utils/labels";
@@ -37,7 +37,7 @@ const HYPOTHESIS_TITLES: Record<keyof Hypothesis, string> = {
   managementPrognosis: "Prise en charge et pronostic",
 };
 
-const SEVERITY_ORDER: Record<string, number> = { CRITICAL: 0, HIGH: 1, MODERATE: 2 };
+const SEVERITY_ORDER: Record<DetectedRedFlag["category"], number> = { CRITICAL: 0, HIGH: 1, MODERATE: 2 };
 
 const isFilled = (value: unknown): boolean =>
   value !== undefined && value !== null && value !== "";
@@ -82,20 +82,15 @@ export const formatRedFlags = (flags: DetectedRedFlags): string => {
   if (!detected.length) return "Aucun drapeau rouge détecté.";
 
   return detected
-    .sort((a, b) => (SEVERITY_ORDER[a.category] ?? 9) - (SEVERITY_ORDER[b.category] ?? 9))
+    .sort((a, b) => SEVERITY_ORDER[a.category] - SEVERITY_ORDER[b.category])
     .map((flag) => `- [${flag.category}] ${flag.label} — ${flag.recommendation}`)
     .join("\n");
 };
 
 /** Renders the ten clinical hypothesis domains. */
 export const formatHypothesis = (hypothesis: Hypothesis): string =>
-  Object.entries(hypothesis)
-    .filter(([, value]) => isFilled(value))
-    .map(([key, value]) => {
-      const title = HYPOTHESIS_TITLES[key as keyof Hypothesis] ?? key;
-      const body = Array.isArray(value) ? value.join(", ") : String(value);
-      return `- ${title} : ${body}`;
-    })
+  Object.entries(HYPOTHESIS_TITLES)
+    .map(([key, title]) => `- ${title} : ${hypothesis[key as keyof Hypothesis]}`)
     .join("\n");
 
 /** Renders metric evolution across assessments with MCID validation. */

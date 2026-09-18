@@ -52,11 +52,13 @@ export function createServer() {
     },
     async ({ contenu }) => {
       const data = PatientParser.parse(contenu);
+      const redFlags = detectRedFlags(data);
+
       return text(
         [
           `# Scores cliniques\n${formatScores(data)}`,
-          `# Drapeaux rouges\n${formatRedFlags(detectRedFlags(data))}`,
-          `# Hypothèse de travail\n${formatHypothesis(generateHypothesis(data))}`,
+          `# Drapeaux rouges\n${formatRedFlags(redFlags)}`,
+          `# Hypothèse de travail\n${formatHypothesis(generateHypothesis(data, redFlags))}`,
         ].join("\n\n"),
       );
     },
