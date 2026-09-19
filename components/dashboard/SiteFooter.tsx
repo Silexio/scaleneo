@@ -26,7 +26,12 @@ export function SiteFooter() {
           className="h-6 w-auto opacity-80 transition-opacity group-hover:opacity-100 dark:invert"
         />
         <span>
-          Développé par <span className="font-semibold tracking-wide text-foreground">SILEXIO</span>
+          Développé avec{" "}
+          <span role="img" aria-label="passion" className="not-italic">
+            ❤️
+          </span>{" "}
+          par{" "}
+          <span className="brand-wordmark text-foreground">SILEXIO</span>
         </span>
       </a>
 

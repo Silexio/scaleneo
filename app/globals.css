@@ -92,6 +92,7 @@
   --duration-fast: 150ms;
   --duration-base: 250ms;
   --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+  --tracking-brand: 0.22em;
 
   --metric-pain: hsl(0 79% 63%);
   --metric-disability: hsl(207 90% 54%);
@@ -172,6 +173,11 @@
     --text-error: hsl(0 70% 65%);
     --text-info: hsl(207 80% 68%);
   }
+}
+
+.brand-wordmark {
+  font-family: var(--font-montserrat), var(--font-sans);
+  letter-spacing: var(--tracking-brand);
 }
 
 body {
