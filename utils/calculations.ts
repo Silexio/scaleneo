@@ -9,10 +9,14 @@ const parseScore = (val: string | number | undefined | null): number | null => {
   return isNaN(parsed) ? null : parsed;
 };
 
-const hasText = (val: string | undefined | null, search: string): boolean => {
-  if (!val) return false;
-  return val.toLowerCase().includes(search.toLowerCase());
+const asText = (val: unknown): string => {
+  if (val === null || val === undefined) return "";
+  if (typeof val === "boolean") return val ? "oui" : "non";
+  return String(val);
 };
+
+const hasText = (val: unknown, search: string): boolean =>
+  asText(val).toLowerCase().includes(search.toLowerCase());
 
 /**
  * Interprets a clinical score based on predefined thresholds
@@ -217,7 +221,7 @@ const analyzePrecautions = (redFlags: DetectedRedFlags) => {
  */
 const analyzePatientsPerspectives = (data: PatientData) => {
   const s11 = data.section11;
-  const comprehension = s11.comprehensionDiagnostic || "inconnue";
+  const comprehension = s11.comprehensionDiagnostic ?? "inconnue";
 
   if (hasText(comprehension, "oui") || hasText(comprehension, "bon"))
     return "Bon niveau de compréhension - Alliance thérapeutique favorable";

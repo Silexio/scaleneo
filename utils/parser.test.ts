@@ -56,10 +56,19 @@ describe("PatientParser.parse", () => {
     expect(data.section6.asymetrieSlr).toBe(25);
   });
 
+  it("sépare les jours d'absence en deux périodes distinctes", () => {
+    const data = PatientParser.parse(
+      "SECTION 13: ACTIVITÉS ET PARTICIPATION\nJours d'absence travail: Derniers 3 mois: 12 | 6 mois: 30",
+    );
+
+    expect(data.section13.joursAbsence3Mois).toBe(12);
+    expect(data.section13.joursAbsence6Mois).toBe(30);
+  });
+
   it("recalcule le contrôle qualité au lieu de faire confiance au fichier", () => {
     const data = PatientParser.parse(TEMPLATE);
 
-    expect(data.section18.confianceExtraction).toMatch(/^\d+%$/);
+    expect(data.section18.confianceExtraction).toBeTypeOf("number");
     expect(data.section18.isComplete).toBe(false);
     expect(data.section18.needsReview).toBe(true);
   });
@@ -74,10 +83,8 @@ describe("PatientParser.parse", () => {
       ]),
     );
 
-    const pourcentage = (value: unknown) => Number(String(value).replace("%", ""));
-
-    expect(pourcentage(rempli.section18.confianceExtraction)).toBeGreaterThan(
-      pourcentage(vierge.section18.confianceExtraction),
+    expect(rempli.section18.confianceExtraction).toBeGreaterThan(
+      vierge.section18.confianceExtraction ?? 0,
     );
   });
 });

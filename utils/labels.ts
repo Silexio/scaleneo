@@ -194,6 +194,8 @@ export const FIELD_LABELS: Record<string, Record<string, string>> = {
     sedentarite: "Sédentarité",
     statutPro: "Statut professionnel",
     joursAbsence: "Jours d'absence travail",
+    joursAbsence3Mois: "Jours d'absence sur 3 mois",
+    joursAbsence6Mois: "Jours d'absence sur 6 mois",
     limitationsPro: "Limitations professionnelles",
     tachesImpossibles: "Tâches impossibles",
     tachesDifficiles: "Tâches difficiles",
@@ -248,7 +250,7 @@ export const FIELD_LABELS: Record<string, Record<string, string>> = {
     managementPrognosis: "Gestion et pronostic",
   },
   section18: {
-    confianceExtraction: "Confiance extraction",
+    confianceExtraction: "Couverture des champs (%, calculée)",
     isComplete: "Complétude",
     needsReview: "Révision manuelle",
     modifiePar: "Modifié par",

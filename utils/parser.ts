@@ -196,6 +196,8 @@ const PARSER_CONFIG: Record<string, Record<string, string>> = {
     "comportement sédentaire": "sedentarite",
     "statut professionnel": "statutPro",
     "jours d'absence": "joursAbsence",
+    "derniers 3 mois": "joursAbsence3Mois",
+    "6 mois": "joursAbsence6Mois",
     "limitations professionnelles": "limitationsPro",
     "tâches impossibles": "tachesImpossibles",
     "tâches difficiles": "tachesDifficiles",
@@ -600,7 +602,7 @@ export class PatientParser {
 
     const pct = total > 0 ? Math.round((filled / total) * 100) : 0;
     const s18 = result.section18;
-    s18.confianceExtraction = `${pct}%`;
+    s18.confianceExtraction = pct;
     s18.isComplete = filled === total && unresolved === 0;
     s18.needsReview = pct < 90 || unresolved > 0;
   }

@@ -169,7 +169,7 @@ export interface Section10 {
 }
 
 export interface Section11 {
-  comprehensionDiagnostic?: string;
+  comprehensionDiagnostic?: boolean | string;
   inquietudes?: string;
   perceptionGravite?: string;
   autoEfficacite?: string;
@@ -209,6 +209,8 @@ export interface Section13 {
   sedentarite?: string;
   statutPro?: string;
   joursAbsence?: string;
+  joursAbsence3Mois?: string | number;
+  joursAbsence6Mois?: string | number;
   limitationsPro?: string;
   tachesImpossibles?: string;
   tachesDifficiles?: string;
@@ -268,7 +270,7 @@ export interface Section17 {
 }
 
 export interface Section18 {
-  confianceExtraction?: string;
+  confianceExtraction?: number;
   isComplete?: boolean | string;
   needsReview?: boolean | string;
   modifiePar?: string;

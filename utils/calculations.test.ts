@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PatientData } from "@/types/patient";
 import { detectRedFlags, generateHypothesis, interpretScore } from "./calculations";
+import { PatientParser } from "./parser";
 
 const emptyPatient = (): PatientData =>
   Object.fromEntries(
@@ -116,6 +117,25 @@ describe("interpretScore", () => {
 });
 
 describe("generateHypothesis", () => {
+  it("lit une case à cocher sans se fier au type de la valeur", () => {
+    const coche = PatientParser.parse(
+      "SECTION 11: PERSPECTIVES\nCompréhension du diagnostic par le patient: ☒ Oui ☐ Partiellement ☐ Non",
+    );
+    const decoche = PatientParser.parse(
+      "SECTION 11: PERSPECTIVES\nCompréhension du diagnostic par le patient: ☐ Oui ☐ Partiellement ☒ Non",
+    );
+
+    expect(coche.section11.comprehensionDiagnostic).toBe(true);
+    expect(generateHypothesis(coche).patientsPerspectives).toContain("Bon niveau");
+    expect(generateHypothesis(decoche).patientsPerspectives).toContain("Compréhension limitée");
+  });
+
+  it("distingue une case décochée d'un champ non renseigné", () => {
+    const vide = PatientParser.parse("SECTION 11: PERSPECTIVES\nCompréhension du diagnostic par le patient: [À remplir]");
+
+    expect(generateHypothesis(vide).patientsPerspectives).toContain("à clarifier");
+  });
+
   it("signale les précautions quand un drapeau rouge est présent", () => {
     const patient = patientWith("section3", { modeApparition: "Traumatisme" });
 
