@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { DashboardNavigation } from "@/components/dashboard/DashboardNavigation";
 import { McpConnectButton } from "@/components/dashboard/McpConnectButton";
+import { SiteFooter } from "@/components/dashboard/SiteFooter";
 import { PatientProvider } from "@/components/providers/PatientProvider";
 
 const geistSans = Geist({
@@ -59,6 +60,8 @@ export default function RootLayout({
             <div className="animate-in fade-in-50 slide-in-from-bottom-2">
               {children}
             </div>
+
+            <SiteFooter />
           </div>
         </PatientProvider>
       </body>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="100%" height="100%" viewBox="0 0 1035 1373" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g id="Logo">
+        <g id="Zone-gauche" serif:id="Zone gauche">
+            <g id="Couleur-Clair" serif:id="Couleur Clair">
+                <path d="M120.367,443.269C120.367,443.269 199.974,343.203 200,307C200.003,303.259 205.756,297.051 210,295C220,290.167 260,282 260,282L289,248C289,248 301.942,210.207 302,210C302.058,209.793 480,25 480,25C359.883,266.554 240.006,405.945 120.367,443.269" style="fill:rgb(107,107,107);"/>
+                <path id="Couleur" d="M480,25L480,1348L20,560L480,25Z" style="fill:rgb(107,107,107);"/>
+            </g>
+            <g id="Couleur-Reflet" serif:id="Couleur Reflet">
+                <path id="Couleur1" serif:id="Couleur" d="M420,197L480,1348L20,560L272.805,537.214L420,197Z" style="fill:rgb(226,226,226);"/>
+            </g>
+            <g id="Couleur-Noir" serif:id="Couleur Noir">
+                <path id="Couleur2" serif:id="Couleur" d="M480,1348L20,560L259,560L480,1348Z" style="fill:rgb(13,13,13);"/>
+                <path d="M20,560L84,704C84,704 108.933,726.25 113,733C117.067,739.75 121.068,751.071 121,759C120.932,766.929 187,909 187,909C187,909 204.056,906.967 224,925C246.599,945.434 240,979 240,979C240,979 250.05,994.371 251,996C252.167,998 254.936,1000.723 257,1003C261.833,1008.333 270.784,1010.926 280,1028C289.216,1045.074 282.245,1061.902 288,1071C293.755,1080.098 480,1348 480,1348C354.431,1069.023 230.757,788.932 20,560Z" style="fill:rgb(13,13,13);"/>
+            </g>
+            <g id="Couleur-Sombre" serif:id="Couleur Sombre">
+                <path id="Couleur3" serif:id="Couleur" d="M367.186,945.745C369.43,952.883 293,560 293,560L480,26L480,1348C480,1348 369.6,957.868 367.186,945.745Z" style="fill:rgb(42,42,42);"/>
+            </g>
+        </g>
+        <g id="Zone-droite" serif:id="Zone droite">
+            <g id="Zone-droite1" serif:id="Zone droite" transform="matrix(-1,0,0,1,1030,0)">
+                <path d="M130.298,748.945L20,560L480,25L480,370.002L130.298,748.945ZM480,470L480,1348L188.733,849.046L480,470Z" style="fill:none;"/>
+            </g>
+            <g id="Bas">
+                <g id="Couleur-Noir1" serif:id="Couleur Noir">
+                    <path id="Couleur-bas" serif:id="Couleur bas" d="M550,470L841.267,849.046L550,1348L550,470Z" style="fill:rgb(13,13,13);"/>
+                    <path d="M550,1348L739,1084C739,1084 751.559,1007.182 761,998C768.19,991.007 806,933 806,933L841,849C701.911,986.474 616.389,1160.678 550,1348Z" style="fill:rgb(13,13,13);"/>
+                </g>
+                <g id="Couleur-Clair1" serif:id="Couleur Clair">
+                    <path id="Couleur4" serif:id="Couleur" d="M550,470L841,849L744,849C744,849 658.771,1062.098 658,1064C657.434,1065.396 719,849 719,849L550,470Z" style="fill:rgb(107,107,107);"/>
+                </g>
+                <g id="Couleur-Reflet1" serif:id="Couleur Reflet">
+                    <path d="M646.763,687L719,849C719,849 657.434,1065.396 658,1064C658.771,1062.098 744,849 744,849L841,849L732.962,835.782L646.763,687Z" style="fill:rgb(226,226,226);"/>
+                </g>
+            </g>
+            <g id="Haut">
+                <path id="Couleur-haut" serif:id="Couleur haut" d="M899.702,748.945L550,370.002L550,25L1010,560L899.702,748.945Z" style="fill:rgb(13,13,13);"/>
+                <path id="Couleur-haut1" serif:id="Couleur haut" d="M796.702,369.937L550,370.002L550,25L796.702,369.937Z" style="fill:rgb(42,42,42);"/>
+                <g id="Couleur-Clair2" serif:id="Couleur Clair">
+                    <path d="M550,25L1010,560L682.055,370L550,25Z" style="fill:rgb(107,107,107);"/>
+                    <path d="M550,25L662,132C664.248,134.04 676.673,154.899 692,168C709.076,182.596 727.885,199.031 733,208C737.982,216.735 740.006,248.266 751,260C763.163,273.139 789.163,286.028 799,287C808.837,287.972 827.828,295.204 830,298C832.172,300.796 854.368,363.308 858,367C861.632,370.692 1010,560 1010,560C808.587,407.728 656.601,228.665 550,25Z" style="fill:rgb(107,107,107);"/>
+                </g>
+                <g id="Couleur-Reflet2" serif:id="Couleur Reflet">
+                    <path d="M609.712,181L696.892,355.744L863,474.833L682.055,370L609.712,181Z" style="fill:rgb(226,226,226);"/>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
