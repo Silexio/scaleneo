@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 const SILEXIO_URL = "https://silexio.be";
 
 /** Development credit, linking back to Silexio. */
@@ -12,13 +10,13 @@ export function SiteFooter() {
         rel="noopener noreferrer"
         className="group inline-flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground ring-offset-background transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element -- SVG statique, next/image n'optimise pas le SVG et coûte 7 Ko de runtime */}
+        <img
           src="/silexio.svg"
           alt=""
           aria-hidden="true"
           width={18}
           height={24}
-          unoptimized
           className="h-6 w-auto opacity-80 transition-opacity group-hover:opacity-100 dark:invert"
         />
         <span>

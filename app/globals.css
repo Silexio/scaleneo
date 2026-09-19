@@ -91,7 +91,7 @@
 
   --duration-fast: 150ms;
   --duration-base: 250ms;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
 
   --metric-pain: hsl(0 79% 63%);
   --metric-disability: hsl(207 90% 54%);
@@ -202,15 +202,15 @@ body {
 }
 
 .anim-enter {
-  animation: anim-enter var(--duration-base) var(--ease-out) both;
+  animation: anim-enter var(--duration-base) var(--ease-entrance) both;
 }
 
 .anim-drop {
-  animation: anim-drop var(--duration-fast) var(--ease-out) both;
+  animation: anim-drop var(--duration-fast) var(--ease-entrance) both;
 }
 
 .anim-pop {
-  animation: anim-pop var(--duration-fast) var(--ease-out) both;
+  animation: anim-pop var(--duration-fast) var(--ease-entrance) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -234,7 +234,9 @@ body {
     print-color-adjust: exact;
   }
 
-  .animate-in {
+  .anim-enter,
+  .anim-drop,
+  .anim-pop {
     animation: none !important;
   }
 

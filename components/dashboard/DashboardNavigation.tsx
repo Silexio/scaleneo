@@ -1,11 +1,10 @@
 "use client";
 
-import Link, { useLinkStatus } from "next/link";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, useReducedMotion } from "motion/react";
 import { ChartLine, ClipboardList, Download, FileUp, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Spinner } from "@/components/ui/spinner";
+import { PendingIcon } from "@/components/ui/pending-icon";
 import { usePatient } from "@/components/providers/PatientProvider";
 import { useAssessments } from "@/hooks/useAssessments";
 
@@ -13,16 +12,7 @@ interface Tab {
   name: string;
   href: string;
   icon: LucideIcon;
-  hasData: boolean;
-}
-
-const SLIDE = { type: "spring", stiffness: 380, damping: 32 } as const;
-
-function TabIcon({ icon: Icon }: { icon: LucideIcon }) {
-  const { pending } = useLinkStatus();
-
-  if (pending) return <Spinner className="size-4" label="Ouverture de la section" />;
-  return <Icon className="size-4 shrink-0" aria-hidden="true" />;
+  hasData?: boolean;
 }
 
 /**
@@ -33,12 +23,11 @@ function TabIcon({ icon: Icon }: { icon: LucideIcon }) {
  */
 export function DashboardNavigation() {
   const pathname = usePathname();
-  const prefersReducedMotion = useReducedMotion();
   const { patientData } = usePatient();
   const { assessments } = useAssessments();
 
   const tabs: Tab[] = [
-    { name: "Extraction", href: "/extraction", icon: FileUp, hasData: false },
+    { name: "Extraction", href: "/extraction", icon: FileUp },
     { name: "Résultats", href: "/results", icon: ClipboardList, hasData: !!patientData },
     { name: "Analytics", href: "/analytics", icon: ChartLine, hasData: assessments.length > 0 },
     { name: "Export", href: "/export", icon: Download, hasData: !!patientData },
@@ -57,26 +46,19 @@ export function DashboardNavigation() {
               aria-current={isActive ? "page" : undefined}
               className={cn(
                 "relative inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium",
-                "ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                "ring-offset-background transition-all duration-[var(--duration-base)] ease-[var(--ease-entrance)]",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                isActive
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-background/50 hover:text-foreground",
               )}
             >
-              {isActive && (
-                <motion.span
-                  layoutId="dashboard-tab"
-                  className="absolute inset-0 rounded-lg bg-background shadow-sm"
-                  transition={prefersReducedMotion ? { duration: 0 } : SLIDE}
-                />
-              )}
-
-              <span className="relative z-10 inline-flex items-center gap-2">
-                <TabIcon icon={tab.icon} />
-                {tab.name}
-              </span>
+              <PendingIcon icon={tab.icon} label="Ouverture de la section" />
+              {tab.name}
 
               {tab.hasData && (
                 <span
-                  className="absolute right-2 top-2 z-10 size-1.5 rounded-full bg-[var(--text-success)]"
+                  className="absolute right-2 top-2 size-1.5 rounded-full bg-[var(--text-success)]"
                   aria-label="Données disponibles"
                 />
               )}

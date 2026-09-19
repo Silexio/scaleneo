@@ -21,6 +21,7 @@ export const metadata: Metadata = {
   title: "Scaleneo - Complete Clinical Platform",
   description:
     "Extraction | Scores | Red Flags | Hypothèse | Analytics & Suivi Longitudinal | Graphiques Interactifs",
+  icons: { icon: "/silexio.svg" },
 };
 
 export default function RootLayout({
