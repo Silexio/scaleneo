@@ -1,53 +1,44 @@
-/**
- * Parser utility for extracting clinical metrics from TXT assessment files
- * Ported from legacy SCALENEO implementation
- */
+import { PatientParser } from "./parser";
+
+type MetricSource = readonly [metric: string, section: string, field: string];
+
+const METRIC_SOURCES: ReadonlyArray<MetricSource> = [
+  ["nrsRepos", "section4", "nrsRepos"],
+  ["nrsActivite", "section4", "nrsActivite"],
+  ["nrsMax", "section4", "nrsMax"],
+  ["asymetrieSlr", "section6", "asymetrieSlr"],
+  ["testSorensen", "section6", "testSorensen"],
+  ["testItoShirado", "section6", "testItoShirado"],
+  ["coreStrengthIndex", "section6", "coreStrengthIndex"],
+  ["sbt", "section7", "scoreSBT"],
+  ["csi", "section7", "scoreCSI"],
+  ["odi", "section7", "scoreODI"],
+  ["pcs", "section7", "scorePCS"],
+  ["hadsAnxiete", "section7", "scoreAnxiete"],
+  ["hadsDepression", "section7", "scoreDepression"],
+  ["fabqTravail", "section7", "scoreFabqTravail"],
+  ["fabqActivite", "section7", "scoreFabqActivite"],
+  ["wai", "section7", "scoreWAI"],
+  ["ipaqMet", "section7", "scoreIPAQ_MET"],
+];
 
 /**
- * Extracts clinical metrics from a text file content using regex patterns
+ * Extracts the trackable numeric metrics of a SCALENEO assessment file.
  *
- * Supported metrics:
- * - SBT: STarT Back Tool score (0-9)
- * - CSI: Central Sensitization Inventory (0-100)
- * - ODI: Oswestry Disability Index (0-100)
- * - PCS: Pain Catastrophizing Scale (0-52)
- * - HADS: Hospital Anxiety and Depression Scale (A: 0-21, D: 0-21)
- * - FABQ: Fear-Avoidance Beliefs Questionnaire (Work: 0-100, Activity: 0-100)
- * - NRS: Numeric Rating Scale for pain (at rest, during activity, maximum)
- * - WAI: Working Alliance Inventory (0-100)
+ * Reads through PatientParser so that extraction, analysis and comparison can never
+ * disagree on what a fiche contains; a document without SCALENEO sections yields nothing.
  *
- * @param content - Raw text content from the assessment file
- * @returns Object containing extracted metric values with metric keys
+ * @param content - Raw text content of an assessment file
+ * @returns Metric keys mapped to their numeric value, absent metrics omitted
  */
 export const extractMetricsFromTxt = (content: string): Record<string, number> => {
-    const metrics: Record<string, number> = {};
+  const data = PatientParser.parse(content) as unknown as Record<string, Record<string, unknown>>;
+  const metrics: Record<string, number> = {};
 
-    /**
-     * Pattern definitions for each metric
-     * Each pattern uses case-insensitive matching and looks for:
-     * - Metric name
-     * - Valid range in parentheses
-     * - Score value after colon, equals, or whitespace
-     */
-    const patterns: Record<string, RegExp> = {
-        sbt: /SBT\s*\(.*0-9\)\s*[:=\s]+(\d+)/iu,
-        csi: /CSI Score.*0-100\)\s*[:=\s]+(\d+)/iu,
-        odi: /ODI Score.*0-100\)\s*[:=\s]+(\d+)/iu,
-        pcs: /PCS Score.*0-52\)\s*[:=\s]+(\d+)/iu,
-        hadsAnxiete: /HADS Score Anxiété.*0-21\)\s*[:=\s]+(\d+)/iu,
-        hadsDepression: /HADS Score Dépression.*0-21\)\s*[:=\s]+(\d+)/iu,
-        fabqTravail: /FABQ Score Travail.*0-100\)\s*[:=\s]+(\d+)/iu,
-        fabqActivite: /FABQ Score Activité.*0-100\)\s*[:=\s]+(\d+)/iu,
-        nrsRepos: /NRS Douleur au Repos\s*[:=\s]+(\d+)/iu,
-        nrsActivite: /NRS Douleur[^R]*l'Activité\s*[:=\s]+(\d+)/iu,
-        nrsMax: /NRS Douleur Maximum\s*[:=\s]+(\d+)/iu,
-        wai: /WAI Score.*0-100\)\s*[:=\s]+(\d+\.?\d*)/iu,
-    };
+  for (const [metric, section, field] of METRIC_SOURCES) {
+    const value = data[section]?.[field];
+    if (typeof value === "number" && Number.isFinite(value)) metrics[metric] = value;
+  }
 
-    for (const [key, pattern] of Object.entries(patterns)) {
-        const match = content.match(pattern);
-        if (match?.[1]) metrics[key] = parseFloat(match[1]);
-    }
-
-    return metrics;
+  return metrics;
 };

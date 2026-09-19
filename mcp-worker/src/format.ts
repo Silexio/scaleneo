@@ -3,7 +3,12 @@ import type { DetectedRedFlag, DetectedRedFlags, generateHypothesis } from "../.
 import { interpretScore } from "../../utils/calculations";
 import { SCORE_DEFINITIONS } from "../../utils/definitions";
 import { FIELD_LABELS, SECTION_LABELS } from "../../utils/labels";
-import { METRICS_CONFIG, type MetricKey } from "../../utils/metricsConfig";
+import {
+  METRICS_CONFIG,
+  TRACKED_MEASURES,
+  type MetricKey,
+  type TrackedMeasureKey,
+} from "../../utils/metricsConfig";
 import { flattenObject } from "../../utils/objectHelpers";
 
 type Hypothesis = ReturnType<typeof generateHypothesis>;
@@ -93,30 +98,72 @@ export const formatHypothesis = (hypothesis: Hypothesis): string =>
     .map(([key, title]) => `- ${title} : ${hypothesis[key as keyof Hypothesis]}`)
     .join("\n");
 
-/** Renders metric evolution across assessments with MCID validation. */
+const round = (value: number): number => Math.round(value * 100) / 100;
+
+const endpointsOf = (
+  series: ReadonlyArray<Record<string, number>>,
+  key: string,
+): { first: number; last: number } | null => {
+  const values = series.map((entry) => entry[key]).filter((value) => value !== undefined);
+  return values.length < 2 ? null : { first: values[0], last: values[values.length - 1] };
+};
+
+const describeChange = (
+  measure: { label: string; direction: "up" | "down" },
+  first: number,
+  last: number,
+  mcid?: number,
+): string => {
+  const delta = round(last - first);
+  const gain = measure.direction === "down" ? -delta : delta;
+  const sign = delta > 0 ? "+" : "";
+
+  const verdict =
+    mcid === undefined
+      ? `${gain > 0 ? "évolution favorable" : gain < 0 ? "évolution défavorable" : "stable"} (pas de MCID de référence)`
+      : gain >= mcid
+        ? `amélioration cliniquement significative (MCID ${mcid})`
+        : gain <= -mcid
+          ? `dégradation cliniquement significative (MCID ${mcid})`
+          : `variation non significative (MCID ${mcid})`;
+
+  return `- ${measure.label} : ${first} → ${last} (${sign}${delta}) — ${verdict}`;
+};
+
+/**
+ * Renders metric evolution across assessments, MCID-validated where a MCID exists.
+ *
+ * Names the assessments no metric could be read from, so an unreadable input is never
+ * reported as an absence of common metrics.
+ */
 export const formatEvolution = (series: ReadonlyArray<Record<string, number>>): string => {
   if (series.length < 2) return "Au moins deux bilans sont nécessaires pour une comparaison.";
 
-  const rows = (Object.keys(METRICS_CONFIG) as MetricKey[]).flatMap((key) => {
-    const values = series.map((entry) => entry[key]).filter((value) => value !== undefined);
-    if (values.length < 2) return [];
+  const unreadable = series.flatMap((entry, index) =>
+    Object.keys(entry).length === 0 ? [index + 1] : [],
+  );
+  if (unreadable.length)
+    return `Aucune donnée chiffrée lue dans le bilan ${unreadable.join(", ")}. Fournis le contenu TXT brut de la fiche SCALENEO, pas un résumé ni une version reformatée.`;
 
+  const validated = (Object.keys(METRICS_CONFIG) as MetricKey[]).flatMap((key) => {
+    const endpoints = endpointsOf(series, key);
     const config = METRICS_CONFIG[key];
-    const first = values[0];
-    const last = values[values.length - 1];
-    const delta = last - first;
-    const gain = config.direction === "down" ? -delta : delta;
-    const verdict = gain >= config.mcid
-      ? `amélioration cliniquement significative (MCID ${config.mcid})`
-      : gain <= -config.mcid
-        ? `dégradation cliniquement significative (MCID ${config.mcid})`
-        : `variation non significative (MCID ${config.mcid})`;
-
-    const sign = delta > 0 ? "+" : "";
-    return [`- ${config.label} : ${first} → ${last} (${sign}${delta}) — ${verdict}`];
+    return endpoints ? [describeChange(config, endpoints.first, endpoints.last, config.mcid)] : [];
   });
 
-  return rows.length ? rows.join("\n") : "Aucune métrique commune entre les bilans fournis.";
+  const tracked = (Object.keys(TRACKED_MEASURES) as TrackedMeasureKey[]).flatMap((key) => {
+    const endpoints = endpointsOf(series, key);
+    return endpoints ? [describeChange(TRACKED_MEASURES[key], endpoints.first, endpoints.last)] : [];
+  });
+
+  if (!validated.length && !tracked.length) return "Aucune métrique commune entre les bilans fournis.";
+
+  const blocks = [
+    validated.length ? `## Métriques validées par MCID\n${validated.join("\n")}` : "",
+    tracked.length ? `## Autres mesures suivies\n${tracked.join("\n")}` : "",
+  ];
+
+  return blocks.filter(Boolean).join("\n\n");
 };
 
 const escapeCsv = (value: unknown): string => {

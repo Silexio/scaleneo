@@ -19,6 +19,8 @@ export interface MetricConfig {
 }
 
 export type MetricKey =
+    | "nrsRepos"
+    | "nrsActivite"
     | "nrsMax"
     | "odi"
     | "csi"
@@ -30,6 +32,22 @@ export type MetricKey =
     | "wai";
 
 export const METRICS_CONFIG: Record<MetricKey, MetricConfig> = {
+    nrsRepos: {
+        label: "Douleur au repos (NRS)",
+        mcid: 2,
+        direction: "down",
+        min: 0,
+        max: 10,
+        color: "var(--metric-pain-rest)",
+    },
+    nrsActivite: {
+        label: "Douleur à l'activité (NRS)",
+        mcid: 2,
+        direction: "down",
+        min: 0,
+        max: 10,
+        color: "var(--metric-pain-activity)",
+    },
     nrsMax: {
         label: "Douleur (NRS Max)",
         mcid: 2,
@@ -95,11 +113,39 @@ export const METRICS_CONFIG: Record<MetricKey, MetricConfig> = {
         color: "var(--metric-avoidance-activity)",
     },
     wai: {
-        label: "Alliance (WAI)",
+        label: "Capacité de travail (WAI)",
         mcid: 10,
         direction: "up",
         min: 0,
         max: 100,
         color: "var(--metric-alliance)",
     },
+};
+
+export interface TrackedMeasure {
+    label: string;
+    direction: "up" | "down";
+}
+
+export type TrackedMeasureKey =
+    | "sbt"
+    | "asymetrieSlr"
+    | "testSorensen"
+    | "testItoShirado"
+    | "coreStrengthIndex"
+    | "ipaqMet";
+
+/**
+ * Measures followed across assessments that have no published MCID.
+ *
+ * Kept apart from METRICS_CONFIG so a raw evolution is never reported as a
+ * clinically significant change.
+ */
+export const TRACKED_MEASURES: Record<TrackedMeasureKey, TrackedMeasure> = {
+    sbt: { label: "Risque de chronicisation (SBT)", direction: "down" },
+    asymetrieSlr: { label: "Asymétrie SLR (degrés)", direction: "down" },
+    testSorensen: { label: "Endurance extenseurs (Sorensen, s)", direction: "up" },
+    testItoShirado: { label: "Endurance fléchisseurs (Ito-Shirado, s)", direction: "up" },
+    coreStrengthIndex: { label: "Core Strength Index (Ito/Sorensen)", direction: "up" },
+    ipaqMet: { label: "Activité physique (IPAQ, MET-min/sem)", direction: "up" },
 };
