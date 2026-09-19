@@ -57,6 +57,11 @@ const isAffirmedIn = (segment: string, term: string): boolean => {
   return !isNegatedBefore && !NEGATION_AFTER_PATTERNS.some((pattern) => positionOf(segment, pattern) > position);
 };
 
+const toSegments = (value: string): string[] =>
+  normalize(value)
+    .split(SEGMENT_BOUNDARY)
+    .filter((segment) => segment !== "");
+
 /**
  * Splits filled patient values into the clauses a warning term can be read in.
  *
@@ -68,8 +73,8 @@ const isAffirmedIn = (segment: string, term: string): boolean => {
  */
 export const toClinicalSegments = (values: string[]): string[] =>
   values
-    .flatMap((value) => normalize(value).split(SEGMENT_BOUNDARY))
-    .filter((segment) => segment !== "" && !FAMILY_PATTERNS.some((pattern) => pattern.test(segment)));
+    .flatMap(toSegments)
+    .filter((segment) => !FAMILY_PATTERNS.some((pattern) => pattern.test(segment)));
 
 /**
  * Counts how many search terms are actually asserted about the patient.
@@ -83,3 +88,16 @@ export const toClinicalSegments = (values: string[]): string[] =>
  */
 export const countAffirmedTerms = (segments: string[], searchTerms: string[]): number =>
   searchTerms.filter((term) => segments.some((segment) => isAffirmedIn(segment, term))).length;
+
+/**
+ * Tells whether a single clinical field asserts at least one of the given terms.
+ *
+ * Each term is read in its own clause, so a documented absence ("non traumatique",
+ * "pas de déficit") never reads as an affirmation of the term it denies.
+ *
+ * @param value - Raw value of one clinical field
+ * @param terms - Terms whose assertion is looked for
+ * @returns True as soon as one term is asserted
+ */
+export const affirmsAnyTerm = (value: string, terms: string[]): boolean =>
+  toSegments(value).some((segment) => terms.some((term) => isAffirmedIn(segment, term)));

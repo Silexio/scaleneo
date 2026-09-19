@@ -153,4 +153,82 @@ describe("generateHypothesis", () => {
     expect(generateHypothesis(dominant).painType).toContain("Sensibilisation Centrale");
     expect(generateHypothesis(pur).painType).toContain("Nociceptif mécanique pur");
   });
+
+  describe("absences documentées", () => {
+    it("ne classe pas en post-traumatique un mode d'apparition nié", () => {
+      const nie = patientWith("section3", { modeApparition: "non traumatique, progressif" });
+      const affirme = patientWith("section3", { modeApparition: "traumatisme par chute" });
+
+      expect(generateHypothesis(nie).pathology).toContain("non-spécifique");
+      expect(generateHypothesis(affirme).pathology).toContain("post-traumatique");
+    });
+
+    it("ne retient pas un facteur contribuant que le kiné a écarté", () => {
+      const aucun = patientWith("section14", { facteursPsycho: "Aucun", facteursBiomeca: "Aucun" });
+      const present = patientWith("section14", { facteursPsycho: "Catastrophisme" });
+
+      expect(generateHypothesis(aucun).contributingFactors).toContain("Pas de facteurs contribuants");
+      expect(generateHypothesis(present).contributingFactors).toContain("Facteurs Psychosociaux");
+    });
+
+    it("ne signale pas de limitation quand aucune activité n'est cochée", () => {
+      const aucune = patientWith("section13", { activitesQuotidiennes: "Aucune" });
+      const limitee = patientWith("section13", { activitesQuotidiennes: "Marche" });
+
+      expect(generateHypothesis(aucune).activityParticipation).toContain("préservée");
+      expect(generateHypothesis(limitee).activityParticipation).toContain("significatives");
+    });
+
+    it("ne lit pas une flexion niée comme une flexion normale", () => {
+      const nie = patientWith("section6", { flexionAvant: "non complet, limité à 20 cm" });
+      const normal = patientWith("section6", { flexionAvant: "complet" });
+
+      expect(generateHypothesis(nie).impairments).toContain("Déficit Flexion");
+      expect(generateHypothesis(normal).impairments).toContain("Pas de déficits majeurs");
+    });
+  });
+
+  describe("déficit de force", () => {
+    it("détecte un déficit unilatéral malgré un côté coté 5/5", () => {
+      const patient = patientWith("section6", { forceMusculaire: "D 4/5, G 5/5" });
+
+      expect(generateHypothesis(patient).impairments).toContain("Déficit Force");
+    });
+
+    it("ne déduit pas un déficit d'un test non réalisé", () => {
+      const patient = patientWith("section6", { forceMusculaire: "non testé" });
+
+      expect(generateHypothesis(patient).impairments).not.toContain("Déficit Force");
+    });
+  });
+
+  describe("pronostic", () => {
+    it("fait primer un drapeau rouge sur les facteurs pronostiques positifs", () => {
+      const patient = {
+        ...emptyPatient(),
+        section3: { modeApparition: "traumatisme par chute" },
+        section12: { facteursPositifs: "bonne motivation" },
+      } as unknown as PatientData;
+
+      expect(generateHypothesis(patient).managementPrognosis).toContain("Pronostic réservé");
+    });
+
+    it("signale un risque de chronicité dès que des yellow flags sont décrits", () => {
+      const patient = patientWith("section12", { detailYellowFlags: "peur du mouvement, arrêt prolongé" });
+
+      expect(generateHypothesis(patient).managementPrognosis).toContain("Yellow Flags");
+    });
+
+    it("reste favorable quand seuls des facteurs positifs sont documentés", () => {
+      const patient = patientWith("section12", { facteursPositifs: "bonne motivation" });
+
+      expect(generateHypothesis(patient).managementPrognosis).toContain("Pronostic favorable");
+    });
+  });
+
+  it("priorise l'éducation quand la compréhension est niée malgré un mot positif", () => {
+    const patient = patientWith("section11", { comprehensionDiagnostic: "Non, mais bonne volonté" });
+
+    expect(generateHypothesis(patient).patientsPerspectives).toContain("Compréhension limitée");
+  });
 });

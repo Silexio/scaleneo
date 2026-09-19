@@ -1,6 +1,6 @@
 import { PatientData } from "@/types/patient";
 import { SCORE_DEFINITIONS, RED_FLAGS, RedFlagDefinition } from "./definitions";
-import { countAffirmedTerms, toClinicalSegments } from "./redFlagMatching";
+import { affirmsAnyTerm, countAffirmedTerms, toClinicalSegments } from "./redFlagMatching";
 
 const parseScore = (val: string | number | undefined | null): number | null => {
   if (val === undefined || val === null) return null;
@@ -15,8 +15,16 @@ const asText = (val: unknown): string => {
   return String(val);
 };
 
-const hasText = (val: unknown, search: string): boolean =>
-  asText(val).toLowerCase().includes(search.toLowerCase());
+const DENIAL = /^(?:non|aucune?s?|n[ée]ant|nulle?|ras|rien|sans|n\/a)\b|^pas\s+d/i;
+
+const MRC_DEFICIT = /\b[0-4]\s*\/\s*5\b/;
+
+const affirms = (val: unknown, ...terms: string[]): boolean => affirmsAnyTerm(asText(val), terms);
+
+const isAsserted = (val: unknown): boolean => {
+  const text = asText(val).trim();
+  return text !== "" && text !== "0" && !DENIAL.test(text);
+};
 
 /**
  * Interprets a clinical score based on predefined thresholds
@@ -125,8 +133,8 @@ const analyzePathology = (data: PatientData) => {
   const trauma = data.section3.modeApparition;
   const type = data.section3.typeLBP;
 
-  if (hasText(trauma, "trauma")) return "Condition mécanique post-traumatique";
-  else if (hasText(type, "chronique")) return "Condition musculo-squelettique chronique";
+  if (affirms(trauma, "trauma")) return "Condition mécanique post-traumatique";
+  else if (affirms(type, "chronique")) return "Condition musculo-squelettique chronique";
   else return "Douleur rachidienne mécanique non-spécifique";
 };
 
@@ -138,15 +146,15 @@ const analyzeSourcesOfSymptoms = (data: PatientData) => {
   const s9 = data.section9;
   const sources: string[] = [];
 
-  if (s9.motifArticulaire) sources.push("Articulaire");
-  if (s9.motifMyofascial) sources.push("Myofasciale");
-  if (s9.motifNeural) sources.push("Neurologique");
+  if (isAsserted(s9.motifArticulaire)) sources.push("Articulaire");
+  if (isAsserted(s9.motifMyofascial)) sources.push("Myofasciale");
+  if (isAsserted(s9.motifNeural)) sources.push("Neurologique");
 
   const s5 = data.section5;
   if (sources.length === 0) {
-    if (s5.douleurArticulaire) sources.push("Articulaire");
-    if (s5.douleurMyofasciale) sources.push("Myofasciale");
-    if (s5.douleurNeurologique) sources.push("Neurologique");
+    if (isAsserted(s5.douleurArticulaire)) sources.push("Articulaire");
+    if (isAsserted(s5.douleurMyofasciale)) sources.push("Myofasciale");
+    if (isAsserted(s5.douleurNeurologique)) sources.push("Neurologique");
   }
 
   return sources.length > 0 ? sources.join(" + ") : "Indéterminée (Mixte probable)";
@@ -165,6 +173,16 @@ const analyzePainType = (data: PatientData) => {
   return "Nociceptif mécanique pur";
 };
 
+const UNIMPAIRED_TERMS = ["complet", "complète", "normal", "normale", "libre", "aucun", "aucune"];
+const IMPAIRED_TERMS = ["limit", "restrein", "déficit", "réduit", "raideur", "douleur"];
+
+const hasFlexionDeficit = (value: unknown): boolean =>
+  affirms(value, ...IMPAIRED_TERMS) || (isAsserted(value) && !affirms(value, ...UNIMPAIRED_TERMS));
+
+const hasStrengthDeficit = (value: unknown): boolean =>
+  isAsserted(value) &&
+  (MRC_DEFICIT.test(asText(value)) || affirms(value, "déficit", "faiblesse", "parésie", "diminué"));
+
 /**
  * Analyzes physical impairments from Section 6
  * Checks flexion range, SLR (neurodynamics), and muscle strength
@@ -173,7 +191,7 @@ const analyzeImpairments = (data: PatientData) => {
   const s6 = data.section6;
   const impairments: string[] = [];
 
-  if (s6.flexionAvant && !hasText(s6.flexionAvant, "complet") && !hasText(s6.flexionAvant, "normal")) {
+  if (hasFlexionDeficit(s6.flexionAvant)) {
     impairments.push("Déficit Flexion");
   }
 
@@ -183,7 +201,7 @@ const analyzeImpairments = (data: PatientData) => {
     impairments.push("Neurodynamique limité (SLR+)");
   }
 
-  if (s6.forceMusculaire && !hasText(s6.forceMusculaire, "5/5")) {
+  if (hasStrengthDeficit(s6.forceMusculaire)) {
     impairments.push("Déficit Force");
   }
 
@@ -223,10 +241,10 @@ const analyzePatientsPerspectives = (data: PatientData) => {
   const s11 = data.section11;
   const comprehension = s11.comprehensionDiagnostic ?? "inconnue";
 
-  if (hasText(comprehension, "oui") || hasText(comprehension, "bon"))
-    return "Bon niveau de compréhension - Alliance thérapeutique favorable";
-  else if (hasText(comprehension, "non") || hasText(comprehension, "faible"))
+  if (affirms(comprehension, "non", "faible", "limitée", "aucune"))
     return "⚠️ Compréhension limitée - Éducation thérapeutique prioritaire";
+  else if (affirms(comprehension, "oui", "bon"))
+    return "Bon niveau de compréhension - Alliance thérapeutique favorable";
   else
     return "Compréhension et attentes à clarifier";
 };
@@ -238,10 +256,10 @@ const analyzePatientsPerspectives = (data: PatientData) => {
 const analyzeActivityParticipation = (data: PatientData) => {
   const s13 = data.section13;
 
-  if (s13.activitesQuotidiennes && s13.activitesQuotidiennes.length > 5)
+  if (isAsserted(s13.activitesQuotidiennes))
     return "Limitations fonctionnelles ADL significatives";
 
-  if (data.section7.scorePSFS)
+  if (isAsserted(data.section7.scorePSFS))
     return `Limitations spécifiques identifiées (PSFS: ${data.section7.scorePSFS})`;
 
   return "Participation ADL relativement préservée";
@@ -255,28 +273,29 @@ const analyzeContributingFactors = (data: PatientData) => {
   const s14 = data.section14;
   const contributing: string[] = [];
 
-  if (s14.facteursPsycho && !hasText(s14.facteursPsycho, "non")) contributing.push("Facteurs Psychosociaux");
-  if (hasText(s14.facteursLifestyle, "sédentaire") || hasText(s14.facteursLifestyle, "inactivité")) contributing.push("Sédentarité");
-  if (s14.facteursBiomeca) contributing.push("Facteurs Biomécaniques");
+  if (isAsserted(s14.facteursPsycho)) contributing.push("Facteurs Psychosociaux");
+  if (affirms(s14.facteursLifestyle, "sédentaire", "sédentarité", "inactivité")) contributing.push("Sédentarité");
+  if (isAsserted(s14.facteursBiomeca)) contributing.push("Facteurs Biomécaniques");
 
   return contributing.length > 0 ? contributing.join(" + ") : "Pas de facteurs contribuants majeurs";
 };
 
 /**
  * Analyzes management approach and prognosis
- * Considers positive prognostic factors, red flags, and yellow flags
+ *
+ * Red flags outrank every positive factor: a warning sign always downgrades the prognosis.
  */
 const analyzeManagementPrognosis = (data: PatientData, redFlags: DetectedRedFlags) => {
   const s12 = data.section12;
 
-  if (hasText(s12.facteursPositifs, "oui") || hasText(s12.facteursPositifs, "bon"))
-    return "Pronostic favorable - Réponse attendue au traitement conservateur";
-
   if (Object.keys(redFlags).length > 0)
     return "Pronostic réservé - Nécessite surveillance médicale (Red Flags)";
 
-  if (hasText(s12.detailYellowFlags, "oui"))
+  if (isAsserted(s12.detailYellowFlags))
     return "Pronostic modéré - Risque de chronicité (Yellow Flags)";
+
+  if (affirms(s12.facteursPositifs, "oui", "bon", "favorable", "motivé", "motivation"))
+    return "Pronostic favorable - Réponse attendue au traitement conservateur";
 
   return "Pronostic standard - Réévaluation à 4 semaines";
 };
