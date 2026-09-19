@@ -1,3 +1,4 @@
+import { ChartColumn } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PatientData } from "@/types/patient";
 import { interpretScore } from "@/utils/calculations";
@@ -79,8 +80,8 @@ export function ScoreSummary({ data }: ScoreSummaryProps) {
   return (
     <Card className="mb-5 border-2 border-accent bg-accent/20">
       <CardHeader>
-        <CardTitle className="text-base text-foreground">
-          📊 Résumé des Scores Cliniques
+        <CardTitle className="flex items-center gap-2 text-base text-foreground">
+          <ChartColumn className="size-4" aria-hidden="true" />Résumé des scores cliniques
         </CardTitle>
       </CardHeader>
       <CardContent>

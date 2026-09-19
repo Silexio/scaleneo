@@ -2,62 +2,68 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChartLine, ClipboardList, Download, FileUp, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { StableBold } from "@/components/ui/StableBold";
 import { usePatient } from "@/components/providers/PatientProvider";
 import { useAssessments } from "@/hooks/useAssessments";
 
+interface Tab {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  hasData: boolean;
+}
+
 /**
- * DashboardNavigation Component
+ * Main dashboard tabs, with a dot marking the sections that already hold data.
  *
- * Main navigation tabs for the SCALENEO dashboard.
- * Displays 5 tabs: Extraction, Results, Analytics, Export, Connexion IA.
- * Shows a green dot on Results and Export when a patient is loaded.
+ * The MCP connection lives in the header instead, to keep this row to the four
+ * steps of a clinical session.
  */
 export function DashboardNavigation() {
   const pathname = usePathname();
   const { patientData } = usePatient();
   const { assessments } = useAssessments();
-  const hasPatient = !!patientData;
-  const hasAnalytics = assessments.length > 0;
 
-  const tabs = [
-    { name: "📋 Extraction", href: "/extraction", id: "extraction", badge: false },
-    { name: "📊 Résultats", href: "/results", id: "results", badge: hasPatient },
-    { name: "📈 Analytics", href: "/analytics", id: "analytics", badge: hasAnalytics },
-    { name: "💾 Export", href: "/export", id: "export", badge: hasPatient },
-    { name: "🔌 Connexion IA", href: "/connect", id: "connect", badge: false },
+  const tabs: Tab[] = [
+    { name: "Extraction", href: "/extraction", icon: FileUp, hasData: false },
+    { name: "Résultats", href: "/results", icon: ClipboardList, hasData: !!patientData },
+    { name: "Analytics", href: "/analytics", icon: ChartLine, hasData: assessments.length > 0 },
+    { name: "Export", href: "/export", icon: Download, hasData: !!patientData },
   ];
 
   return (
-    <div className="flex justify-center w-full">
-      <div className="grid w-full max-w-4xl grid-cols-2 sm:grid-cols-5 h-auto p-1 bg-muted border shadow-sm rounded-lg">
+    <nav aria-label="Sections du bilan" className="flex w-full justify-center">
+      <div className="grid w-full max-w-2xl grid-cols-2 gap-1 rounded-xl border bg-muted p-1 shadow-sm sm:grid-cols-4">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;
+          const Icon = tab.icon;
+
           return (
             <Link
-              key={tab.id}
+              key={tab.href}
               href={tab.href}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
-                "group relative inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-3 text-sm font-medium border border-transparent ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                "relative inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium",
+                "ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 isActive
-                  ? "bg-background/80 backdrop-blur-md border-foreground/10 text-foreground shadow-md"
-                  : "hover:bg-background/50 hover:backdrop-blur-md hover:border-foreground/10 hover:text-foreground hover:shadow-md text-muted-foreground",
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
               )}
             >
-              <StableBold
-                text={tab.name}
-                hoverClassName={cn(
-                  isActive ? "font-bold" : "group-hover:font-bold group-hover:text-foreground"
-                )}
-              />
-              {tab.badge && (
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[var(--text-success)]" />
+              <Icon className="size-4 shrink-0" aria-hidden="true" />
+              {tab.name}
+              {tab.hasData && (
+                <span
+                  className="absolute right-2 top-2 size-1.5 rounded-full bg-[var(--text-success)]"
+                  aria-label="Données disponibles"
+                />
               )}
             </Link>
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }

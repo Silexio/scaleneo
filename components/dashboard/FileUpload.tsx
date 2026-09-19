@@ -96,7 +96,7 @@ export function FileUpload({ onDataParsed }: FileUploadProps) {
     const isTxt = fileNameLower.endsWith(".txt") || file.type === "text/plain";
 
     if (!isJson && !isTxt) {
-      setError("⚠️ Format non supporté. Veuillez télécharger un fichier .json ou .txt");
+      setError("Format non supporté. Veuillez télécharger un fichier .json ou .txt");
       setIsProcessing(false);
       return;
     }
@@ -107,7 +107,7 @@ export function FileUpload({ onDataParsed }: FileUploadProps) {
     const reader = new FileReader();
 
     reader.onerror = () => {
-      setError("❌ Erreur de lecture du fichier. Vérifiez que le fichier n'est pas corrompu.");
+      setError("Erreur de lecture du fichier. Vérifiez que le fichier n'est pas corrompu.");
       setIsProcessing(false);
     };
 
@@ -121,8 +121,8 @@ export function FileUpload({ onDataParsed }: FileUploadProps) {
 
         if (content.trim().startsWith("{\\rtf")) {
           throw new Error(
-            "❌ Format RTF détecté. Veuillez enregistrer au format 'Texte brut' (.txt) sans mise en forme.\n\n" +
-            "💡 Astuce: Dans votre éditeur de texte, utilisez 'Enregistrer sous' → Format: 'Texte brut (.txt)'"
+            "Format RTF détecté. Veuillez enregistrer au format 'Texte brut' (.txt) sans mise en forme.\n\n" +
+            "Astuce : dans votre éditeur de texte, utilisez 'Enregistrer sous' → Format: 'Texte brut (.txt)'"
           );
         }
 
@@ -132,7 +132,7 @@ export function FileUpload({ onDataParsed }: FileUploadProps) {
           try {
             parsedData = JSON.parse(content) as PatientData;
           } catch (jsonErr) {
-            console.error("❌ Erreur de parsing JSON:", jsonErr);
+            console.error("Erreur de parsing JSON:", jsonErr);
             throw new Error(`Format JSON invalide. Vérifiez la syntaxe du fichier.`);
           }
         } else {
@@ -141,7 +141,7 @@ export function FileUpload({ onDataParsed }: FileUploadProps) {
 
         if (!parsedData.section1 || Object.keys(parsedData.section1).length === 0) {
           throw new Error(
-            "⚠️ Aucune donnée extraite de la Section 1 (Identité Patient).\n\n" +
+            "Aucune donnée extraite de la Section 1 (Identité Patient).\n\n" +
             "Vérifiez que le fichier respecte le format du template SCALENEO."
           );
         }
@@ -158,7 +158,7 @@ export function FileUpload({ onDataParsed }: FileUploadProps) {
         setError(errorMessage);
         setIsProcessing(false);
 
-        console.error("❌ Erreur de parsing:", err);
+        console.error("Erreur de parsing:", err);
       }
     };
 
@@ -170,7 +170,7 @@ export function FileUpload({ onDataParsed }: FileUploadProps) {
       <CardHeader>
         <CardTitle className="text-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            📥 Chargement Fichier
+            <Upload className="size-4" aria-hidden="true" />Chargement du fichier
           </div>
           <a
             href="/documents/FICHE_BILAN_SCALENEO_TEMPLATE.txt"
@@ -280,7 +280,7 @@ export function FileUpload({ onDataParsed }: FileUploadProps) {
           <div className="mt-4 p-3 bg-primary/10 text-primary rounded-md text-sm flex items-center gap-2 animate-in slide-in-from-top-2">
             <Check className="w-4 h-4 shrink-0" />
             <span>
-              ✅ Fichier {fileType} chargé avec succès. Données extraites et prêtes à l&apos;emploi.
+              Fichier {fileType} chargé. Données extraites et prêtes à l&apos;emploi.
             </span>
           </div>
         )}

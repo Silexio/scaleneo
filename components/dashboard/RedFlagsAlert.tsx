@@ -54,7 +54,9 @@ export function RedFlagsAlert({ data }: RedFlagsAlertProps) {
         <div className="flex items-center gap-3">
           <AlertTriangle className="w-6 h-6 text-destructive" />
           <CardTitle className="text-destructive text-base">
-            {flagCount} DRAPEAU(X) ROUGE(S) DÉTECTÉ(S)
+            {flagCount === 1
+              ? "1 drapeau rouge détecté"
+              : `${flagCount} drapeaux rouges détectés`}
           </CardTitle>
         </div>
       </CardHeader>

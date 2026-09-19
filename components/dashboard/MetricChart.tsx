@@ -20,6 +20,7 @@ import {
     Legend,
     ReferenceLine,
 } from "recharts";
+import { ChartLine } from "lucide-react";
 import { MetricConfig } from "@/utils/metricsConfig";
 
 interface MetricChartProps {
@@ -72,7 +73,7 @@ export function MetricChart({
         <Card className="shadow-sm border-muted overflow-hidden print:break-inside-avoid">
             <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-bold flex items-center justify-between">
-                    <span>📈 Trend: {config.label}</span>
+                    <span className="flex items-center gap-2"><ChartLine className="size-4" aria-hidden="true" />{config.label}</span>
                     <span className="text-[10px] font-normal text-muted-foreground">
                         Range: {config.min}-{config.max}
                     </span>

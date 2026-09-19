@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Trash2, AlertCircle, Check, X, Printer } from "lucide-react";
+import { TrendingUp, Trash2, AlertCircle, Check, X, Printer, Table } from "lucide-react";
 import { METRICS_CONFIG } from "@/utils/metricsConfig";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { MetricChart } from "@/components/dashboard/MetricChart";
@@ -153,8 +153,8 @@ export default function AnalyticsPage() {
 
               <Card className="shadow-sm border-muted overflow-hidden print:break-inside-avoid">
                 <CardHeader className="bg-muted/30 pb-3">
-                  <CardTitle className="text-sm font-bold">
-                    📋 Tableau Récapitulatif & Validation MCID
+                  <CardTitle className="flex items-center gap-2 text-sm font-bold">
+                    <Table className="size-4" aria-hidden="true" />Tableau récapitulatif et validation MCID
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">

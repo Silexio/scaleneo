@@ -8,7 +8,7 @@ import { RedFlagsAlert } from "@/components/dashboard/RedFlagsAlert";
 import { ScoreSummary } from "@/components/dashboard/ScoreSummary";
 import { HypothesisView } from "@/components/dashboard/HypothesisView";
 import { SectionCard } from "@/components/dashboard/SectionCard";
-import { Upload } from "lucide-react";
+import { ClipboardList, Upload } from "lucide-react";
 
 export default function ResultsPage() {
   const { patientData } = usePatient();
@@ -44,7 +44,7 @@ export default function ResultsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>📋 Données Détaillées</span>
+            <span className="flex items-center gap-2"><ClipboardList className="size-4" aria-hidden="true" />Données détaillées</span>
             <span className="text-xs font-normal text-muted-foreground">{filledSections.length} sections renseignées</span>
           </CardTitle>
         </CardHeader>

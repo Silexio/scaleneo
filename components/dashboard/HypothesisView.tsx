@@ -1,3 +1,4 @@
+import { Brain } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { PatientData } from "@/types/patient";
 import { generateHypothesis } from "@/utils/calculations";
@@ -22,8 +23,8 @@ export function HypothesisView({ data }: HypothesisViewProps) {
   return (
     <Card className="mb-5 border-2 border-accent bg-accent/20">
       <CardHeader>
-        <CardTitle className="text-base text-foreground">
-          🧠 Hypothèse Clinique Synthétisée
+        <CardTitle className="flex items-center gap-2 text-base text-foreground">
+          <Brain className="size-4" aria-hidden="true" />Hypothèse clinique synthétisée
         </CardTitle>
       </CardHeader>
       <CardContent>

@@ -85,7 +85,7 @@ export default function ExportPage() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>💾 Export & Édition</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Download className="size-4" aria-hidden="true" />Export &amp; Édition</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-20 gap-6">
@@ -108,7 +108,7 @@ export default function ExportPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>💾 Export & Édition</CardTitle>
+        <CardTitle className="flex items-center gap-2"><Download className="size-4" aria-hidden="true" />Export &amp; Édition</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">

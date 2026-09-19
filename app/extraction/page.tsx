@@ -7,7 +7,7 @@ import { FileUpload } from "@/components/dashboard/FileUpload";
 import { usePatient } from "@/components/providers/PatientProvider";
 import { PatientData } from "@/types/patient";
 import { useRouter } from "next/navigation";
-import { AlertCircle, ArrowRight } from "lucide-react";
+import { AlertCircle, ArrowRight, Check, Cog } from "lucide-react";
 import Link from "next/link";
 
 export default function ExtractionPage() {
@@ -27,12 +27,14 @@ export default function ExtractionPage() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {patientData && !isRedirecting && (
-        <div className="col-span-1 md:col-span-2 flex items-center gap-3 p-3 bg-[var(--bg-warning)] border border-[var(--border-warning)] text-[var(--text-warning)] rounded-lg text-sm">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>Un patient est déjà chargé. Charger un nouveau fichier remplacera les données actuelles.</span>
-          <Link href="/results" className="ml-auto shrink-0">
-            <Button variant="outline" size="sm" className="border-[var(--border-warning)] text-[var(--text-warning)] h-7 text-xs gap-1">
-              Voir les résultats <ArrowRight className="w-3 h-3" />
+        <div className="col-span-1 md:col-span-2 flex flex-col gap-3 rounded-lg border border-[var(--border-warning)] bg-[var(--bg-warning)] p-3 text-sm text-[var(--text-warning)] sm:flex-row sm:items-center">
+          <div className="flex items-start gap-3 sm:items-center">
+            <AlertCircle className="mt-0.5 size-4 shrink-0 sm:mt-0" />
+            <span>Un patient est déjà chargé. Charger un nouveau fichier remplacera les données actuelles.</span>
+          </div>
+          <Link href="/results" className="shrink-0 sm:ml-auto">
+            <Button variant="outline" size="sm" className="h-7 w-full gap-1 border-[var(--border-warning)] text-xs text-[var(--text-warning)] sm:w-auto">
+              Voir les résultats <ArrowRight className="size-3" />
             </Button>
           </Link>
         </div>
@@ -42,7 +44,7 @@ export default function ExtractionPage() {
 
       <Card className="h-full">
         <CardHeader>
-          <CardTitle className="text-lg">⚙️ Traitement</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-lg"><Cog className="size-4" aria-hidden="true" />Traitement</CardTitle>
         </CardHeader>
         <CardContent>
           {patientData ? (
@@ -54,7 +56,8 @@ export default function ExtractionPage() {
                 </div>
               ) : (
                 <div className="p-4 bg-muted text-foreground rounded-lg text-sm flex items-center gap-2 border border-border">
-                  ✅ Analyse complétée avec succès
+                  <Check className="size-4 shrink-0 text-[var(--text-success)]" aria-hidden="true" />
+                  Analyse terminée
                 </div>
               )}
 
