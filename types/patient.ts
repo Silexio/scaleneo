@@ -139,7 +139,7 @@ export interface Section8 {
   instabiliteRachidienne?: string;
   signesInstabilite?: string;
   limitationManuelle?: string;
-  anticoagulation?: string;
+  anticoagulation?: boolean | string;
   traitementAnticoagulation?: string;
   grossesse?: string;
   trimestreGrossesse?: string;
@@ -183,7 +183,7 @@ export interface Section12 {
   facteursNegatifs?: string;
   objectifsCourtTerme?: string;
   objectifsLongTerme?: string;
-  attentesRealistes?: boolean;
+  attentesRealistes?: boolean | string;
   detailAttentes?: string;
   anticipationGuerison?: string;
   detailYellowFlags?: string;
@@ -217,7 +217,7 @@ export interface Section13 {
   attentesRetourTravail?: string;
   delaiRetourTravail?: string;
   confianceRetourTravail?: string;
-  modifPoste?: boolean;
+  modifPoste?: boolean | string;
   typeModifPoste?: string;
 }
 

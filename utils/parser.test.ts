@@ -45,6 +45,52 @@ describe("PatientParser.parse", () => {
     expect(data.section2.imc).toBeCloseTo(25.9, 1);
   });
 
+  it("lit une taille notée en mètres comme les kinés l'écrivent", () => {
+    const anthropometrie = (taille: string) =>
+      PatientParser.parse(`SECTION 2: ANTHROPOMÉTRIE\nPoids (kg): 92\nTaille (cm): ${taille}`).section2;
+
+    expect(anthropometrie("1m81").taille).toBe(1.81);
+    expect(anthropometrie("1 m 81").taille).toBe(1.81);
+    expect(anthropometrie("1m81").imc).toBeCloseTo(28.1, 1);
+    expect(anthropometrie("181 cm").imc).toBeCloseTo(28.1, 1);
+  });
+
+  it("laisse l'IMC vide plutôt que de sortir une valeur impossible", () => {
+    const data = PatientParser.parse(
+      fill([
+        [/^Poids \(kg\): .*$/m, "Poids (kg): 92"],
+        [/^Taille \(cm\): .*$/m, "Taille (cm): 1"],
+      ]),
+    );
+
+    expect(data.section2.imc).toBeNull();
+  });
+
+  it("lit une case cochée placée après son libellé", () => {
+    const profession = (ligne: string) =>
+      PatientParser.parse(`SECTION 1: ADMINISTRATIF\n${ligne}`).section1.profession;
+
+    expect(profession("Profession: Manuel [X] | Non-manuel [ ] | Hybride [ ]")).toBe("Manuel");
+    expect(profession("Profession: Manuel ☒ | Non-manuel ☐")).toBe("Manuel");
+    expect(profession("Profession: ☐ Manuel | ☒ Non-manuel | ☐ Hybride")).toBe("Non-manuel");
+  });
+
+  it("extrait le trimestre noté entre parenthèses", () => {
+    const data = PatientParser.parse(
+      "SECTION 8: DRAPEAUX ROUGES\nGrossesse: ☐ N/A ☒ Oui (trimestre:2) | Adaptations: éviter décubitus",
+    );
+
+    expect(data.section8.grossesse).toBe(true);
+    expect(data.section8.trimestreGrossesse).toBe(2);
+  });
+
+  it("ne prend pas les mentions de signature du template pour des valeurs", () => {
+    const data = PatientParser.parse(TEMPLATE);
+
+    expect(data.section18.modifiePar).toBeNull();
+    expect(data.section18.dateModification).toBeNull();
+  });
+
   it("calcule l'asymétrie SLR comme un écart absolu", () => {
     const data = PatientParser.parse(
       fill([

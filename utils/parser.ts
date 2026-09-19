@@ -263,7 +263,13 @@ const PARSER_CONFIG: Record<string, Record<string, string>> = {
 const CHECKBOX_REGEX = /(☒|☑|☐|\[x\]|\[ \])\s*([^☒☑☐[\]|:]+)/gi;
 const CHECKBOX_MARKER = /☒|☑|☐|\[x\]|\[ \]/i;
 const EMOJI_NOISE = /[⚠️✅❌]/g;
-const PLACEHOLDER = /à remplir|auto-calc/i;
+const PLACEHOLDER = /à remplir|auto-calc|^signature\/initiales|^date$/i;
+const INLINE_SUBFIELD = /\(([^():|]+):([^()]*)\)/g;
+const TRAILING_CHECKBOX = /([^|]+?)\s*(☒|☑|☐|\[x\]|\[ \])\s*(?=\||$)/gi;
+const METRE_NOTATION = /^(\d)\s*m\s*(\d{1,2})$/i;
+
+const MIN_PLAUSIBLE_BMI = 10;
+const MAX_PLAUSIBLE_BMI = 80;
 
 const GENERIC_SUBFIELDS = new Set(["nrs", "localisation", "détails", "met", "debout", "marche", "scores"]);
 
@@ -396,7 +402,7 @@ export class PatientParser {
     }
 
     const mainParts: string[] = [];
-    for (const segment of value.split("|").map(s => s.trim()).filter(Boolean)) {
+    for (const segment of value.replace(INLINE_SUBFIELD, " | $1: $2").split("|").map(s => s.trim()).filter(Boolean)) {
       const remainder = this.consumeSubField(segment, foundKey, targetProp, config, section, mainParts.length > 0);
       if (remainder !== null) mainParts.push(remainder);
     }
@@ -504,7 +510,8 @@ export class PatientParser {
     return fuzzy ? config[fuzzy] : null;
   }
 
-  private static extractValue(text: string): string | boolean | number | null {
+  private static extractValue(raw: string): string | boolean | number | null {
+    const text = raw.replace(new RegExp(TRAILING_CHECKBOX.source, TRAILING_CHECKBOX.flags), "$2 $1");
     const labels: string[] = [];
     let foundCheckbox = false;
 
@@ -555,10 +562,20 @@ export class PatientParser {
     return match ? Number(match[1].replace(",", ".")) : value;
   }
 
+  private static toHeight(
+    value: string | string[] | boolean | number | null
+  ): string | string[] | boolean | number | null {
+    if (typeof value !== "string") return value;
+    const metreNotation = value.trim().match(METRE_NOTATION);
+    if (!metreNotation) return this.toNumeric(value);
+    return Number(`${metreNotation[1]}.${metreNotation[2].padEnd(2, "0")}`);
+  }
+
   private static normalizeNumericFields(result: Record<string, SectionData>): void {
     for (const section of Object.values(result)) {
       for (const prop of Object.keys(section)) {
-        if (NUMERIC_PROPS.has(prop)) section[prop] = this.toNumeric(section[prop]);
+        if (prop === "taille") section[prop] = this.toHeight(section[prop]);
+        else if (NUMERIC_PROPS.has(prop)) section[prop] = this.toNumeric(section[prop]);
       }
     }
   }
@@ -567,7 +584,8 @@ export class PatientParser {
     const s2 = result.section2;
     if (s2.imc == null && typeof s2.poids === "number" && typeof s2.taille === "number") {
       const metres = s2.taille > 3 ? s2.taille / 100 : s2.taille;
-      if (metres > 0) s2.imc = Math.round((s2.poids / (metres * metres)) * 10) / 10;
+      const imc = Math.round((s2.poids / (metres * metres)) * 10) / 10;
+      if (metres > 0 && imc >= MIN_PLAUSIBLE_BMI && imc <= MAX_PLAUSIBLE_BMI) s2.imc = imc;
     }
 
     const s6 = result.section6;
