@@ -1,5 +1,3 @@
-"use client";
-
 import { AlertTriangle, Bot, Plug, Terminal, Wrench } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CopyField } from "@/components/dashboard/CopyField";

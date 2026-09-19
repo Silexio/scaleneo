@@ -7,7 +7,20 @@ import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Trash2, AlertCircle, Check, X, Printer, Table } from "lucide-react";
 import { METRICS_CONFIG } from "@/utils/metricsConfig";
 import { MetricCard } from "@/components/dashboard/MetricCard";
-import { MetricChart } from "@/components/dashboard/MetricChart";
+import dynamic from "next/dynamic";
+import { Spinner } from "@/components/ui/spinner";
+
+const MetricChart = dynamic(
+    () => import("@/components/dashboard/MetricChart").then((m) => m.MetricChart),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="flex h-[340px] items-center justify-center rounded-lg border bg-card text-muted-foreground shadow-sm">
+                <Spinner label="Chargement du graphique" />
+            </div>
+        ),
+    },
+);
 import { AssessmentTimeline } from "@/components/dashboard/AssessmentTimeline";
 import { AddAssessmentForm } from "@/components/dashboard/AddAssessmentForm";
 import { useAssessments } from "@/hooks/useAssessments";

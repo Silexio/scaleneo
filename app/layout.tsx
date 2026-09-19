@@ -22,6 +22,7 @@ export const metadata: Metadata = {
   description:
     "Extraction | Scores | Red Flags | Hypothèse | Analytics & Suivi Longitudinal | Graphiques Interactifs",
   icons: { icon: "/silexio.svg" },
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({
