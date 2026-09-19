@@ -63,31 +63,47 @@ export default function ConnectPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Comment l&apos;ajouter</CardTitle>
-            <CardDescription>Choisissez la méthode correspondant à votre client.</CardDescription>
+            <CardDescription>
+              Trois façons de procéder selon le type de client. L&apos;adresse à coller est la même
+              dans tous les cas.
+            </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-6">
             <section className="space-y-3">
               <h3 className="flex items-center gap-2 text-sm font-bold">
-                <Bot className="size-4" />
-                Claude (application et navigateur)
+                <Bot className="size-4" aria-hidden="true" />
+                Assistants conversationnels
               </h3>
+              <p className="text-sm text-muted-foreground">
+                Claude, ChatGPT et les autres assistants qui acceptent un serveur MCP distant.
+                Les intitulés varient, la marche à suivre est la même.
+              </p>
               <ol className="ml-5 list-decimal space-y-1 text-sm text-muted-foreground">
-                <li>Ouvrez les paramètres, section Connecteurs.</li>
-                <li>Choisissez d&apos;ajouter un connecteur personnalisé.</li>
+                <li>Ouvrez les paramètres, section Connecteurs ou Intégrations.</li>
+                <li>Ajoutez un serveur MCP distant, parfois appelé connecteur personnalisé.</li>
                 <li>Collez l&apos;adresse du serveur ci-dessus, puis validez.</li>
               </ol>
             </section>
 
             <section className="space-y-3">
               <h3 className="flex items-center gap-2 text-sm font-bold">
-                <Terminal className="size-4" />
-                Claude Code
+                <Terminal className="size-4" aria-hidden="true" />
+                Agents en ligne de commande
               </h3>
+              <p className="text-sm text-muted-foreground">
+                Claude Code, Codex, OpenClaw et les autres agents de terminal. Chacun a sa propre
+                commande, mais tous attendent la même adresse et le transport HTTP. Exemple avec
+                Claude Code :
+              </p>
               <CopyField
-                label="Commande à exécuter"
+                label="Exemple — Claude Code"
                 value={`claude mcp add --transport http scaleneo ${MCP_URL}`}
               />
+              <p className="text-sm text-muted-foreground">
+                Pour un autre agent, cherchez sa commande d&apos;ajout de serveur MCP et donnez-lui
+                cette même adresse.
+              </p>
             </section>
 
             <section className="space-y-3">
@@ -97,7 +113,7 @@ export default function ConnectPage() {
               </h3>
               <p className="text-sm text-muted-foreground">
                 Si votre client n&apos;accepte que des serveurs locaux, ce fichier de configuration
-                fait le relais. Il nécessite Node.js sur le poste.
+                fait le relais vers l&apos;adresse distante. Il nécessite Node.js sur le poste.
               </p>
               <CopyField label="Configuration JSON" value={desktopConfig(MCP_URL)} />
             </section>
