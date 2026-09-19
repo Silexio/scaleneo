@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload, Check, AlertCircle, FileText, Download } from "lucide-react";
@@ -201,10 +202,10 @@ export function FileUpload({ onDataParsed }: FileUploadProps) {
           <div className="flex flex-col items-center justify-center gap-4">
             {isProcessing ? (
               <div className="p-4 bg-primary/10 rounded-full text-primary">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                <Spinner className="size-8 border-4" label="Analyse du fichier en cours" />
               </div>
             ) : fileName ? (
-              <div className="p-4 bg-primary/10 rounded-full text-primary animate-in zoom-in">
+              <div className="p-4 bg-primary/10 rounded-full text-primary anim-pop">
                 <Check className="w-8 h-8" />
               </div>
             ) : (
@@ -270,14 +271,14 @@ export function FileUpload({ onDataParsed }: FileUploadProps) {
         </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm flex items-start gap-2 animate-in slide-in-from-top-2">
+          <div className="mt-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm flex items-start gap-2 anim-drop">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <div className="flex-1 whitespace-pre-line">{error}</div>
           </div>
         )}
 
         {fileName && !error && !isProcessing && (
-          <div className="mt-4 p-3 bg-primary/10 text-primary rounded-md text-sm flex items-center gap-2 animate-in slide-in-from-top-2">
+          <div className="mt-4 p-3 bg-primary/10 text-primary rounded-md text-sm flex items-center gap-2 anim-drop">
             <Check className="w-4 h-4 shrink-0" />
             <span>
               Fichier {fileType} chargé. Données extraites et prêtes à l&apos;emploi.

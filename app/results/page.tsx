@@ -15,7 +15,7 @@ export default function ResultsPage() {
 
   if (!patientData) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 gap-6 bg-muted/30 rounded-xl border border-dashed border-border animate-in fade-in-50">
+      <div className="flex flex-col items-center justify-center py-24 gap-6 bg-muted/30 rounded-xl border border-dashed border-border anim-enter">
         <div className="text-center space-y-2">
           <p className="text-muted-foreground font-medium">Aucun patient chargé</p>
           <p className="text-sm text-muted-foreground/70">Importez un fichier bilan pour visualiser les résultats.</p>
@@ -36,7 +36,7 @@ export default function ResultsPage() {
   });
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2">
+    <div className="space-y-6 anim-enter">
       <RedFlagsAlert data={patientData} />
       <ScoreSummary data={patientData} />
       <HypothesisView data={patientData} />

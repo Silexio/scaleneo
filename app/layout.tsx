@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { DashboardNavigation } from "@/components/dashboard/DashboardNavigation";
 import { McpConnectButton } from "@/components/dashboard/McpConnectButton";
+import { PageTransition } from "@/components/dashboard/PageTransition";
 import { SiteFooter } from "@/components/dashboard/SiteFooter";
 import { PatientProvider } from "@/components/providers/PatientProvider";
 
@@ -57,9 +58,7 @@ export default function RootLayout({
 
             <div className="print:hidden"><DashboardNavigation /></div>
 
-            <div className="animate-in fade-in-50 slide-in-from-bottom-2">
-              {children}
-            </div>
+            <PageTransition>{children}</PageTransition>
 
             <SiteFooter />
           </div>

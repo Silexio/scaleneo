@@ -89,6 +89,10 @@
 
   --radius: 0.5rem;
 
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
   --metric-pain: hsl(0 79% 63%);
   --metric-disability: hsl(207 90% 54%);
   --metric-sensitization: hsl(37 90% 51%);
@@ -174,6 +178,47 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+@keyframes anim-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+@keyframes anim-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
+@keyframes anim-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
+.anim-enter {
+  animation: anim-enter var(--duration-base) var(--ease-out) both;
+}
+
+.anim-drop {
+  animation: anim-drop var(--duration-fast) var(--ease-out) both;
+}
+
+.anim-pop {
+  animation: anim-pop var(--duration-fast) var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-enter,
+  .anim-drop,
+  .anim-pop {
+    animation: none;
+  }
 }
 
 @media print {

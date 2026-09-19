@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { usePatient } from "@/components/providers/PatientProvider";
 import { AlertCircle, Check, Download, FileSpreadsheet, FileText, Upload } from "lucide-react";
 import { useState } from "react";
@@ -144,20 +145,21 @@ export default function ExportPage() {
           </div>
 
           {isExporting && (
-            <div className="text-center text-sm text-muted-foreground animate-pulse">
-              Génération du fichier en cours...
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Spinner label="Génération du fichier en cours" />
+              Génération du fichier en cours
             </div>
           )}
 
           {exportSuccess && (
-            <div className="p-3 bg-primary/10 text-primary rounded-md text-sm flex items-center gap-2 animate-in slide-in-from-top-2">
+            <div className="p-3 bg-primary/10 text-primary rounded-md text-sm flex items-center gap-2 anim-drop">
               <Check className="w-4 h-4 shrink-0" />
               Fichier {exportSuccess} téléchargé avec succès.
             </div>
           )}
 
           {exportError && (
-            <div className="p-3 bg-destructive/10 text-destructive rounded-md text-sm flex items-center gap-2 animate-in slide-in-from-top-2">
+            <div className="p-3 bg-destructive/10 text-destructive rounded-md text-sm flex items-center gap-2 anim-drop">
               <AlertCircle className="w-4 h-4 shrink-0" />
               {exportError}
             </div>
