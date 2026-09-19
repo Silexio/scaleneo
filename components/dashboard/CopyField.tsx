@@ -11,20 +11,20 @@ interface CopyFieldProps {
 
 /** Read-only value with a one-click copy action and transient confirmation. */
 export function CopyField({ value, label }: CopyFieldProps) {
-  const [copied, setCopied] = useState(false);
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
 
   useEffect(() => {
-    if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), 2000);
+    if (state === "idle") return;
+    const timer = setTimeout(() => setState("idle"), 3000);
     return () => clearTimeout(timer);
-  }, [copied]);
+  }, [state]);
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(value);
-      setCopied(true);
+      setState("copied");
     } catch {
-      setCopied(false);
+      setState("failed");
     }
   };
 
@@ -38,10 +38,12 @@ export function CopyField({ value, label }: CopyFieldProps) {
           variant="outline"
           size="sm"
           onClick={handleCopy}
-          aria-label={copied ? `${label} copié` : `Copier ${label}`}
+          aria-label={state === "copied" ? `${label} copié` : `Copier ${label}`}
         >
-          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-          <span className="ml-2">{copied ? "Copié" : "Copier"}</span>
+          {state === "copied" ? <Check className="size-4" /> : <Copy className="size-4" />}
+          <span className="ml-2">
+            {state === "copied" ? "Copié" : state === "failed" ? "Sélectionnez le texte" : "Copier"}
+          </span>
         </Button>
       </div>
       <pre className="overflow-x-auto rounded-md border bg-muted px-3 py-2 font-mono text-xs text-foreground">

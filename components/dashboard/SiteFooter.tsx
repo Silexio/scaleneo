@@ -1,9 +1,14 @@
-const SILEXIO_URL = "https://silexio.be";
+import { Github } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-/** Development credit, linking back to Silexio. */
+const SILEXIO_URL = "https://silexio.be";
+const REPOSITORY_URL = "https://github.com/Silexio/scaleneo";
+
+/** Development credit and source link. */
 export function SiteFooter() {
   return (
-    <footer className="flex justify-center border-t pt-5 print:hidden">
+    <footer className="flex flex-col items-center justify-center gap-2 border-t pt-5 sm:flex-row sm:gap-4 print:hidden">
       <a
         href={SILEXIO_URL}
         target="_blank"
@@ -22,6 +27,16 @@ export function SiteFooter() {
         <span>
           Développé par <span className="font-semibold tracking-wide text-foreground">SILEXIO</span>
         </span>
+      </a>
+
+      <a
+        href={REPOSITORY_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-2 text-muted-foreground")}
+      >
+        <Github className="size-4" aria-hidden="true" />
+        Code source
       </a>
     </footer>
   );
